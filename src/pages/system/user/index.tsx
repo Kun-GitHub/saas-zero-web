@@ -8,7 +8,7 @@ import type { ActionType, ProColumns } from '@ant-design/pro-components';
 import { ProTable } from '@ant-design/pro-components';
 import { useIntl } from '@umijs/max';
 import { App, Button, Form, Input, Modal, Select, Space, Tag } from 'antd';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { getRoleList } from '@/services/saas-zero/role';
 import {
   assignUserRoles,
@@ -135,7 +135,7 @@ const UserList: React.FC = () => {
         open={modalOpen}
         onOk={async () => {
           const values = await form.validateFields();
-          if (editRecord) { await updateUser({ ...values, id: editRecord.id }); } else { await createUser(values); }
+          if (editRecord) { await updateUser({ ...values, id: Number(editRecord.id) }); } else { await createUser(values); }
           message.success(f('message.' + (editRecord ? 'updateSuccess' : 'createSuccess')));
           setModalOpen(false); actionRef.current?.reload();
         }}

@@ -9,7 +9,7 @@ export async function createDept(body: SaaS.DeptCreate) {
 
 export async function updateDept(body: SaaS.DeptUpdate) {
   return request<SaaS.EmptyResp>('/system/dept/update', {
-    method: 'PUT',
+    method: 'POST',
     data: body,
   });
 }
@@ -27,9 +27,10 @@ export async function getDeptList() {
   });
 }
 
-export async function getDeptDetail(id: string) {
-  return request<SaaS.SysDept>(`/system/dept/${id}`, {
+export async function getDeptDetail(id: number) {
+  return request<SaaS.SysDept>('/system/dept/detail', {
     method: 'GET',
+    params: { id },
   });
 }
 

@@ -7,6 +7,15 @@ export async function login(body: SaaS.LoginParams) {
   });
 }
 
+export async function getCaptcha() {
+  const res: any = await request('/oauth/code', { method: 'GET' });
+  // @umijs/max 返回 { code, msg, data }，需手动拆 data
+  if (res && res.code !== undefined && res.data) {
+    return res.data as SaaS.CaptchaResult;
+  }
+  return res as SaaS.CaptchaResult;
+}
+
 export async function getCurrentUser() {
   return request<SaaS.CurrentUser>('/oauth/userinfo', {
     method: 'GET',

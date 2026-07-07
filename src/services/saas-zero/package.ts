@@ -9,7 +9,7 @@ export async function createPackage(body: any) {
 
 export async function updatePackage(body: any) {
   return request<SaaS.EmptyResp>('/system/package/update', {
-    method: 'PUT',
+    method: 'POST',
     data: body,
   });
 }
@@ -28,8 +28,9 @@ export async function getPackageList(params: { page: number; pageSize: number })
   });
 }
 
-export async function getPackageDetail(id: string) {
-  return request<SaaS.SysPackage>(`/system/package/${id}`, {
+export async function getPackageDetail(id: number) {
+  return request<SaaS.SysPackage>('/system/package/detail', {
     method: 'GET',
+    params: { id },
   });
 }

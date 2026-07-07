@@ -1,6 +1,5 @@
 import {
   ApartmentOutlined,
-  CheckOutlined,
   CodeOutlined,
   DeleteOutlined,
   PlusOutlined,
@@ -9,7 +8,7 @@ import type { ActionType, ProColumns } from '@ant-design/pro-components';
 import { ProTable } from '@ant-design/pro-components';
 import { useIntl } from '@umijs/max';
 import { App, Button, Checkbox, Form, Input, InputNumber, Modal, Select, Space, Tag, Tree } from 'antd';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { assignRoleApis, assignRoleMenus, createRole, deleteRole, getRoleList, updateRole } from '@/services/saas-zero/role';
 import { getApiList } from '@/services/saas-zero/api';
 import { getMenuTree } from '@/services/saas-zero/menu';
@@ -105,7 +104,7 @@ const RoleList: React.FC = () => {
         open={modalOpen}
         onOk={async () => {
           const values = await form.validateFields();
-          if (editRecord) { await updateRole({ ...values, id: editRecord.id }); } else { await createRole(values); }
+          if (editRecord) { await updateRole({ ...values, id: Number(editRecord.id) }); } else { await createRole(values); }
           message.success(f('message.' + (editRecord ? 'updateSuccess' : 'createSuccess')));
           setModalOpen(false); actionRef.current?.reload();
         }}

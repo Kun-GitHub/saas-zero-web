@@ -11,6 +11,9 @@ export default {
   'pages.login.rememberMe': 'Remember me',
   'pages.login.forgotPassword': 'Forgot password?',
   'pages.login.submit': 'Sign In',
+  'pages.login.captcha.placeholder': 'Enter verification code',
+  'pages.login.captcha.required': 'Verification code is required',
+  'pages.login.captcha.refresh': 'Refresh',
 
   'pages.dashboard.title': 'Dashboard',
   'pages.dashboard.userTotal': 'Total Users',

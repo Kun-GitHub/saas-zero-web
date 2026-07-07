@@ -45,7 +45,7 @@ const DeptList: React.FC = () => {
         open={modalOpen}
         onOk={async () => {
           const values = await form.validateFields();
-          if (editRecord) { await updateDept({ ...values, id: editRecord.id }); } else { await createDept(values); }
+          if (editRecord) { await updateDept({ ...values, id: Number(editRecord.id) }); } else { await createDept(values); }
           message.success(f('message.' + (editRecord ? 'updateSuccess' : 'createSuccess'))); setModalOpen(false); actionRef.current?.reload();
         }}
         onCancel={() => setModalOpen(false)}

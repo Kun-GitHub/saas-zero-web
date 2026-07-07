@@ -54,7 +54,7 @@ const MenuList: React.FC = () => {
         open={modalOpen}
         onOk={async () => {
           const values = await form.validateFields();
-          if (editRecord) { await updateMenu({ ...values, id: editRecord.id }); } else { await createMenu(values); }
+          if (editRecord) { await updateMenu({ ...values, id: Number(editRecord.id) }); } else { await createMenu(values); }
           message.success(f('message.' + (editRecord ? 'updateSuccess' : 'createSuccess')));
           setModalOpen(false); actionRef.current?.reload();
         }}

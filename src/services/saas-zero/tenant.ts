@@ -9,7 +9,7 @@ export async function createTenant(body: any) {
 
 export async function updateTenant(body: any) {
   return request<SaaS.EmptyResp>('/system/tenant/update', {
-    method: 'PUT',
+    method: 'POST',
     data: body,
   });
 }
@@ -28,15 +28,16 @@ export async function getTenantList(params: SaaS.TenantQuery) {
   });
 }
 
-export async function getTenantDetail(id: string) {
-  return request<SaaS.SysTenant>(`/system/tenant/${id}`, {
+export async function getTenantDetail(id: number) {
+  return request<SaaS.SysTenant>('/system/tenant/detail', {
     method: 'GET',
+    params: { id },
   });
 }
 
-export async function changeTenantStatus(id: string, status: string) {
+export async function changeTenantStatus(body: any) {
   return request<SaaS.EmptyResp>('/system/tenant/changeStatus', {
     method: 'POST',
-    data: { id, status },
+    data: body,
   });
 }

@@ -11,6 +11,9 @@ export default {
   'pages.login.rememberMe': '记住我',
   'pages.login.forgotPassword': '忘记密码?',
   'pages.login.submit': '登 录',
+  'pages.login.captcha.placeholder': '请输入验证码',
+  'pages.login.captcha.required': '请输入验证码',
+  'pages.login.captcha.refresh': '换一张',
 
   'pages.dashboard.title': '控制台',
   'pages.dashboard.userTotal': '用户总数',

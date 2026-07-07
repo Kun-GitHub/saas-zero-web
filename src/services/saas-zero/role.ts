@@ -9,7 +9,7 @@ export async function createRole(body: SaaS.RoleCreate) {
 
 export async function updateRole(body: SaaS.RoleUpdate) {
   return request<SaaS.EmptyResp>('/system/role/update', {
-    method: 'PUT',
+    method: 'POST',
     data: body,
   });
 }
@@ -28,9 +28,10 @@ export async function getRoleList(params: SaaS.RoleQuery) {
   });
 }
 
-export async function getRoleDetail(id: string) {
-  return request<SaaS.SysRole>(`/system/role/${id}`, {
+export async function getRoleDetail(id: number) {
+  return request<SaaS.SysRole>('/system/role/detail', {
     method: 'GET',
+    params: { id },
   });
 }
 

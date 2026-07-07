@@ -15,11 +15,18 @@ declare namespace SaaS {
     tenantCode: string;
     username: string;
     password: string;
+    captchaId?: string;
+    captchaVal?: string;
   };
 
   type LoginResult = {
     token: string;
     user: CurrentUser;
+  };
+
+  type CaptchaResult = {
+    captchaId: string;
+    captchaImg: string;
   };
 
   type PageResult<T> = {

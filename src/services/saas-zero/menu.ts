@@ -9,7 +9,7 @@ export async function createMenu(body: SaaS.MenuCreate) {
 
 export async function updateMenu(body: SaaS.MenuUpdate) {
   return request<SaaS.EmptyResp>('/system/menu/update', {
-    method: 'PUT',
+    method: 'POST',
     data: body,
   });
 }
@@ -27,9 +27,10 @@ export async function getMenuList() {
   });
 }
 
-export async function getMenuDetail(id: string) {
-  return request<SaaS.SysMenu>(`/system/menu/${id}`, {
+export async function getMenuDetail(id: number) {
+  return request<SaaS.SysMenu>('/system/menu/detail', {
     method: 'GET',
+    params: { id },
   });
 }
 

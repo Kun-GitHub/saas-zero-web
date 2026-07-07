@@ -9,7 +9,7 @@ export async function createUser(body: SaaS.UserCreate) {
 
 export async function updateUser(body: SaaS.UserUpdate) {
   return request<SaaS.EmptyResp>('/system/user/update', {
-    method: 'PUT',
+    method: 'POST',
     data: body,
   });
 }
@@ -21,8 +21,18 @@ export async function deleteUser(ids: number[]) {
   });
 }
 
-export async function batchDeleteUser(ids: number[]) {
-  return deleteUser(ids);
+export async function getUserList(params: SaaS.UserQuery) {
+  return request<SaaS.PageResult<SaaS.SysUser>>('/system/user/list', {
+    method: 'GET',
+    params,
+  });
+}
+
+export async function getUserDetail(id: number) {
+  return request<SaaS.SysUser>('/system/user/detail', {
+    method: 'GET',
+    params: { id },
+  });
 }
 
 export async function assignUserRoles(body: SaaS.UserAssignRoles) {
@@ -36,24 +46,5 @@ export async function resetUserPassword(body: SaaS.UserResetPassword) {
   return request<SaaS.EmptyResp>('/system/user/resetPassword', {
     method: 'POST',
     data: body,
-  });
-}
-
-export async function getUserList(params: SaaS.UserQuery) {
-  return request<SaaS.PageResult<SaaS.SysUser>>('/system/user/list', {
-    method: 'GET',
-    params,
-  });
-}
-
-export async function getUserDetail(id: string) {
-  return request<SaaS.SysUser>(`/system/user/${id}`, {
-    method: 'GET',
-  });
-}
-
-export async function getUserByUsername(username: string) {
-  return request<SaaS.SysUser>(`/system/user/username/${username}`, {
-    method: 'GET',
   });
 }

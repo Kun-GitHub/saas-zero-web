@@ -5,7 +5,7 @@ export async function createApi(body: any) {
 }
 
 export async function updateApi(body: any) {
-  return request<SaaS.EmptyResp>('/system/api/update', { method: 'PUT', data: body });
+  return request<SaaS.EmptyResp>('/system/api/update', { method: 'POST', data: body });
 }
 
 export async function deleteApi(ids: number[]) {
@@ -16,6 +16,6 @@ export async function getApiList(params: SaaS.ApiQuery) {
   return request<SaaS.PageResult<SaaS.SysApi>>('/system/api/list', { method: 'GET', params });
 }
 
-export async function getApiDetail(id: string) {
-  return request<SaaS.SysApi>(`/system/api/${id}`, { method: 'GET' });
+export async function getApiDetail(id: number) {
+  return request<SaaS.SysApi>('/system/api/detail', { method: 'GET', params: { id } });
 }

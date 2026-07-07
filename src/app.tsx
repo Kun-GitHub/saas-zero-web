@@ -169,6 +169,14 @@ export const request: RequestConfig = {
   ],
   responseInterceptors: [
     (response: any) => {
+      if (response && response.code !== undefined && response.data !== undefined) {
+        if (response.code !== 0) {
+          const err: any = new Error(response.msg || 'Request failed');
+          err.code = response.code;
+          throw err;
+        }
+        return response.data;
+      }
       return response;
     },
   ],
