@@ -1,11 +1,18 @@
-/**
- * @see https://umijs.org/docs/max/access#access
- * */
 export default function access(
-  initialState: { currentUser?: API.CurrentUser } | undefined,
+  initialState: { currentUser?: SaaS.CurrentUser } | undefined,
 ) {
   const { currentUser } = initialState ?? {};
+  const roleCodes = currentUser?.roleCodes || [];
+  const permissions = currentUser?.permissions || [];
+  const hasPermission = (code: string) => permissions.includes(code);
+  const hasRole = (code: string) => roleCodes.includes(code);
+
   return {
-    canAdmin: currentUser && currentUser.access === 'admin',
+    isAdmin: hasRole('admin'),
+    canAdmin: hasRole('admin') || hasRole('manager'),
+    routeFilter: (route: any) => {
+      if (!route.name) return true;
+      return hasPermission(`menu:${route.name}`) || hasRole('admin');
+    },
   };
 }

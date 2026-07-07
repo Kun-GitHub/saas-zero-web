@@ -1,51 +1,67 @@
-import { LinkOutlined } from '@ant-design/icons';
+import { LogoutOutlined, UserOutlined } from '@ant-design/icons';
 import type { Settings as LayoutSettings } from '@ant-design/pro-components';
 import { SettingDrawer } from '@ant-design/pro-components';
 import type { RequestConfig, RunTimeLayoutConfig } from '@umijs/max';
-import { history, Link } from '@umijs/max';
-import React from 'react';
-import {
-  AvatarDropdown,
-  AvatarName,
-  Footer,
-  Question,
-  SelectLang,
-} from '@/components';
-import { currentUser as queryCurrentUser } from '@/services/ant-design-pro/api';
+import { history } from '@umijs/max';
+import { App, Dropdown } from 'antd';
+import { createStyles } from 'antd-style';
+import React, { useCallback } from 'react';
+import { SelectLang } from '@/components';
+import { getCurrentUser, getMenus } from '@/services/saas-zero/auth';
 import defaultSettings from '../config/defaultSettings';
-import { errorConfig } from './requestErrorConfig';
-import '@ant-design/v5-patch-for-react-19';
 
 const isDev = process.env.NODE_ENV === 'development' || process.env.CI;
 const loginPath = '/user/login';
 
-/**
- * @see https://umijs.org/docs/api/runtime-config#getinitialstate
- * */
+const useStyles = createStyles(({ token }) => ({
+  userContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    cursor: 'pointer',
+  },
+  userAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: '50%',
+    background: `linear-gradient(135deg, ${token.colorPrimary}, #6366f1)`,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: '#fff',
+    fontSize: 14,
+  },
+  userInfo: {
+    lineHeight: 1.2,
+    textAlign: 'left' as const,
+  },
+  userName: {
+    fontSize: 14,
+    fontWeight: 500,
+    color: token.colorText,
+  },
+  userRole: {
+    fontSize: 12,
+    color: token.colorTextSecondary,
+  },
+}));
+
 export async function getInitialState(): Promise<{
   settings?: Partial<LayoutSettings>;
-  currentUser?: API.CurrentUser;
+  currentUser?: SaaS.CurrentUser;
   loading?: boolean;
-  fetchUserInfo?: () => Promise<API.CurrentUser | undefined>;
+  fetchUserInfo?: () => Promise<SaaS.CurrentUser | undefined>;
 }> {
   const fetchUserInfo = async () => {
     try {
-      const msg = await queryCurrentUser({
-        skipErrorHandler: true,
-      });
-      return msg.data;
-    } catch (_error) {
-      history.push(loginPath);
+      const user = await getCurrentUser();
+      return user;
+    } catch {
+      return undefined;
     }
-    return undefined;
   };
-  // 如果不是登录页面，执行
   const { location } = history;
-  if (
-    ![loginPath, '/user/register', '/user/register-result'].includes(
-      location.pathname,
-    )
-  ) {
+  if (location.pathname !== loginPath) {
     const currentUser = await fetchUserInfo();
     return {
       fetchUserInfo,
@@ -59,68 +75,64 @@ export async function getInitialState(): Promise<{
   };
 }
 
-// ProLayout 支持的api https://procomponents.ant.design/components/layout
-export const layout: RunTimeLayoutConfig = ({
-  initialState,
-  setInitialState,
-}) => {
+const AvatarContent: React.FC<{ currentUser?: SaaS.CurrentUser }> = ({ currentUser }) => {
+  const { styles } = useStyles();
+  const { message } = App.useApp();
+
+  const onLogout = useCallback(() => {
+    localStorage.removeItem('saas-zero-token');
+    message.success('已退出登录');
+    history.push(loginPath);
+  }, [message]);
+
+  if (!currentUser) return null;
+
+  return (
+    <Dropdown
+      menu={{
+        items: [
+          {
+            key: 'logout',
+            icon: <LogoutOutlined />,
+            label: '退出登录',
+            onClick: onLogout,
+          },
+        ],
+      }}
+    >
+      <div className={styles.userContainer}>
+        <div className={styles.userAvatar}>
+          <UserOutlined />
+        </div>
+        <div className={styles.userInfo}>
+          <div className={styles.userName}>{currentUser.nickname || currentUser.userName}</div>
+          <div className={styles.userRole}>
+            {(currentUser as any).roleNames?.join(', ') || '超级管理员'}
+          </div>
+        </div>
+      </div>
+    </Dropdown>
+  );
+};
+
+export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) => {
   return {
-    actionsRender: () => [
-      <Question key="doc" />,
-      <SelectLang key="SelectLang" />,
-    ],
-    avatarProps: {
-      src: initialState?.currentUser?.avatar,
-      title: <AvatarName />,
-      render: (_, avatarChildren) => {
-        return <AvatarDropdown>{avatarChildren}</AvatarDropdown>;
-      },
-    },
+    actionsRender: () => [<SelectLang key="SelectLang" />],
+    avatarProps: false as any,
     waterMarkProps: {
-      content: initialState?.currentUser?.name,
+      content: initialState?.currentUser?.userName,
     },
-    footerRender: () => <Footer />,
+    footerRender: false,
     onPageChange: () => {
       const { location } = history;
-      // 如果没有登录，重定向到 login
-      if (!initialState?.currentUser && location.pathname !== loginPath) {
+      if (!initialState?.currentUser && location.pathname !== loginPath && !location.pathname.startsWith('/init')) {
         history.push(loginPath);
       }
     },
-    bgLayoutImgList: [
-      {
-        src: 'https://mdn.alipayobjects.com/yuyan_qk0oxh/afts/img/D2LWSqNny4sAAAAAAAAAAAAAFl94AQBr',
-        left: 85,
-        bottom: 100,
-        height: '303px',
-      },
-      {
-        src: 'https://mdn.alipayobjects.com/yuyan_qk0oxh/afts/img/C2TWRpJpiC0AAAAAAAAAAAAAFl94AQBr',
-        bottom: -68,
-        right: -45,
-        height: '303px',
-      },
-      {
-        src: 'https://mdn.alipayobjects.com/yuyan_qk0oxh/afts/img/F6vSTbj8KpYAAAAAAAAAAAAAFl94AQBr',
-        bottom: 0,
-        left: 0,
-        width: '331px',
-      },
-    ],
-    links: isDev
-      ? [
-          <Link key="openapi" to="/umi/plugin/openapi" target="_blank">
-            <LinkOutlined />
-            <span>OpenAPI 文档</span>
-          </Link>,
-        ]
-      : [],
+    links: [],
     menuHeaderRender: undefined,
-    // 自定义 403 页面
-    // unAccessible: <div>unAccessible</div>,
-    // 增加一个 loading 的状态
+    rightContentRender: () => <AvatarContent currentUser={initialState?.currentUser} />,
     childrenRender: (children) => {
-      // if (initialState?.loading) return <PageLoading />;
       return (
         <>
           {children}
@@ -144,12 +156,30 @@ export const layout: RunTimeLayoutConfig = ({
   };
 };
 
-/**
- * @name request 配置，可以配置错误处理
- * 它基于 axios 和 ahooks 的 useRequest 提供了一套统一的网络请求和错误处理方案。
- * @doc https://umijs.org/docs/max/request#配置
- */
 export const request: RequestConfig = {
-  baseURL: 'https://proapi.azurewebsites.net',
-  ...errorConfig,
+  baseURL: '',
+  requestInterceptors: [
+    (config: any) => {
+      const token = localStorage.getItem('saas-zero-token');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+      return config;
+    },
+  ],
+  responseInterceptors: [
+    (response: any) => {
+      return response;
+    },
+  ],
+  errorConfig: {
+    errorHandler: (error: any) => {
+      const { response } = error;
+      if (response && response.status === 401) {
+        localStorage.removeItem('saas-zero-token');
+        history.push(loginPath);
+      }
+      return Promise.reject(error);
+    },
+  },
 };

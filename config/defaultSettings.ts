@@ -1,27 +1,30 @@
 import type { ProLayoutProps } from '@ant-design/pro-components';
 
-/**
- * @name
- */
 const Settings: ProLayoutProps & {
   pwa?: boolean;
   logo?: string;
 } = {
   navTheme: 'light',
-  // 拂晓蓝
-  colorPrimary: '#1890ff',
-  layout: 'mix',
+  colorPrimary: '#2563eb',
+  layout: 'side',
   contentWidth: 'Fluid',
-  fixedHeader: false,
+  fixedHeader: true,
   fixSiderbar: true,
   colorWeak: false,
-  title: 'Ant Design Pro',
-  pwa: true,
-  logo: 'https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg',
+  title: 'SaaS-Zero',
+  pwa: false,
+  logo: '/logo.svg',
   iconfontUrl: '',
   token: {
-    // 参见ts声明，demo 见文档，通过token 修改样式
-    //https://procomponents.ant.design/components/layout#%E9%80%9A%E8%BF%87-token-%E4%BF%AE%E6%94%B9%E6%A0%B7%E5%BC%8F
+    header: {
+      colorBgHeader: '#fff',
+      colorHeaderTitle: '#1e293b',
+      heightLayoutHeader: 64,
+    },
+    sider: {
+      colorBgMenuItemSelected: '#eff6ff',
+      colorMenuItemDivider: '#f1f5f9',
+    },
   },
 };
 

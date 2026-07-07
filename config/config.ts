@@ -178,8 +178,6 @@ export default defineConfig({
    */
   mako: {},
   esbuildMinifyIIFE: true,
-  requestRecord: {},
-  exportStatic: {},
   define: {
     'process.env.CI': process.env.CI,
   },
