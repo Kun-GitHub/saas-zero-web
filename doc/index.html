@@ -1,0 +1,2064 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SaaS-Zero 管理平台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
+        .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+        .scrollbar-thin::-webkit-scrollbar-track { background: #f1f5f9; }
+        .scrollbar-thin::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        .page-enter { animation: fadeIn 0.2s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .tree-indent { padding-left: 1.5rem; }
+        .tree-line { position: relative; }
+        .tree-line::before { content: ''; position: absolute; left: 0.5rem; top: 1.25rem; bottom: -0.75rem; width: 1px; background: #e2e8f0; }
+        
+        .modal-enter { animation: modalFadeIn 0.2s ease-out; }
+        @keyframes modalFadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        
+        .toast-enter { animation: toastSlideIn 0.3s ease-out; }
+        @keyframes toastSlideIn { from { opacity: 0; transform: translateX(100%); } to { opacity: 1; transform: translateX(0); } }
+        
+        tr:hover { background-color: #f9fafb; }
+        
+        .btn-pulse { transition: transform 0.1s ease; }
+        .btn-pulse:active { transform: scale(0.98); }
+        
+        .sidebar-collapsed { width: 64px; }
+        .sidebar-collapsed .sidebar-text { display: none; }
+        .sidebar-collapsed .sidebar-icon { margin-right: 0; }
+        .sidebar-collapsed .tenant-info { display: none; }
+        .sidebar-collapsed .user-info-text { display: none; }
+        
+        .animate-spin-slow { animation: spin 3s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        
+        @media (max-width: 640px) {
+            .mobile-hidden { display: none; }
+            .mobile-full-width { width: 100% !important; }
+            .mobile-stack { flex-direction: column; }
+            .mobile-center { text-align: center; }
+            .modal-content { max-width: 95%; }
+            .px-6 { padding-left: 1rem; padding-right: 1rem; }
+            .py-6 { padding-top: 1rem; padding-bottom: 1rem; }
+        }
+        
+        @media (max-width: 1024px) {
+            .sidebar-collapsed { width: 64px; }
+        }
+        
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: { 50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe', 300: '#93c5fd', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 800: '#1e40af', 900: '#1e3a8a' },
+                        success: { 500: '#10b981', 600: '#059669' },
+                        warning: { 500: '#f59e0b', 600: '#d97706' },
+                        danger: { 500: '#ef4444', 600: '#dc2626' },
+                        info: { 500: '#06b6d4', 600: '#0891b2' },
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50">
+
+<!-- Login Page -->
+<div id="login-page" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
+        <div class="text-center mb-8">
+            <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <i class="fa-solid fa-building text-white text-2xl"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-800">SaaS-Zero 管理平台</h1>
+            <p class="text-gray-500 mt-2">统一身份认证与权限管理系统</p>
+        </div>
+        
+        <form id="login-form" class="space-y-6">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">租户编码</label>
+                <div class="relative">
+                    <i class="fa-solid fa-building absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                    <input type="text" id="tenant-code" value="default" class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" placeholder="请输入租户编码">
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">用户名</label>
+                <div class="relative">
+                    <i class="fa-solid fa-user absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                    <input type="text" id="username" value="admin" class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" placeholder="请输入用户名">
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">密码</label>
+                <div class="relative">
+                    <i class="fa-solid fa-lock absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                    <input type="password" id="password" value="123456" class="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" placeholder="请输入密码">
+                    <i class="fa-solid fa-eye absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer" id="toggle-password"></i>
+                </div>
+            </div>
+            <div class="flex items-center justify-between">
+                <label class="flex items-center">
+                    <input type="checkbox" class="w-4 h-4 text-blue-600 border-gray-300 rounded">
+                    <span class="ml-2 text-sm text-gray-600">记住我</span>
+                </label>
+                <button type="button" class="text-sm text-blue-600 hover:text-blue-700">忘记密码?</button>
+            </div>
+            <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-lg font-medium hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl">
+                登 录
+            </button>
+        </form>
+        
+        <p class="text-center text-gray-500 text-sm mt-6">
+            © 2024 SaaS-Zero. All rights reserved.
+        </p>
+    </div>
+</div>
+
+<!-- Admin Layout -->
+<div id="admin-layout" class="hidden h-screen flex">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="w-64 bg-white border-r border-gray-200 flex flex-col transition-all duration-300 lg:w-64">
+        <div class="h-16 flex items-center justify-between px-6 border-b border-gray-100">
+            <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+                    <i class="fa-solid fa-building text-white text-sm"></i>
+                </div>
+                <span class="font-bold text-gray-800 text-lg sidebar-text">SaaS-Zero</span>
+            </div>
+            <button onclick="toggleSidebar()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                <i class="fa-solid fa-chevron-left text-gray-500"></i>
+            </button>
+        </div>
+        
+        <div class="p-4 border-b border-gray-100">
+            <div class="bg-gray-50 rounded-lg p-3">
+                <div class="text-xs text-gray-500 mb-1">当前租户</div>
+                <div class="flex items-center justify-between">
+                    <span class="font-medium text-gray-800">默认租户</span>
+                    <i class="fa-solid fa-chevron-down text-gray-400 text-xs cursor-pointer"></i>
+                </div>
+            </div>
+        </div>
+        
+        <nav class="flex-1 overflow-y-auto scrollbar-thin p-4">
+            <ul class="space-y-1" id="sidebar-menu">
+                <li>
+                    <button onclick="showPage('dashboard')" class="w-full flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-all group page-btn" data-page="dashboard">
+                        <i class="fa-solid fa-chart-pie w-5 text-center mr-3 text-gray-400 group-hover:text-blue-500"></i>
+                        <span>控制台</span>
+                    </button>
+                </li>
+                
+                <li>
+                    <button class="w-full flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-all group" onclick="toggleSubmenu('system-menu')">
+                        <i class="fa-solid fa-sitemap w-5 text-center mr-3 text-gray-400 group-hover:text-blue-500"></i>
+                        <span>系统管理</span>
+                        <i class="fa-solid fa-chevron-right w-5 ml-auto text-gray-400 transition-transform" id="system-menu-icon"></i>
+                    </button>
+                    <ul id="system-menu" class="hidden pl-4 mt-1 space-y-1">
+                        <li><button onclick="showPage('user')" class="w-full flex items-center px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg text-sm page-btn" data-page="user"><i class="fa-solid fa-user w-4 mr-2 text-gray-400"></i>用户管理</button></li>
+                        <li><button onclick="showPage('role')" class="w-full flex items-center px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg text-sm page-btn" data-page="role"><i class="fa-solid fa-shield-halved w-4 mr-2 text-gray-400"></i>角色管理</button></li>
+                        <li><button onclick="showPage('menu')" class="w-full flex items-center px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg text-sm page-btn" data-page="menu"><i class="fa-solid fa-bars w-4 mr-2 text-gray-400"></i>菜单管理</button></li>
+                        <li><button onclick="showPage('dept')" class="w-full flex items-center px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg text-sm page-btn" data-page="dept"><i class="fa-solid fa-building-2 w-4 mr-2 text-gray-400"></i>部门管理</button></li>
+                    </ul>
+                </li>
+                
+                <li>
+                    <button class="w-full flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-all group" onclick="toggleSubmenu('tenant-menu')">
+                        <i class="fa-solid fa-building-circle w-5 text-center mr-3 text-gray-400 group-hover:text-blue-500"></i>
+                        <span>租户管理</span>
+                        <i class="fa-solid fa-chevron-right w-5 ml-auto text-gray-400 transition-transform" id="tenant-menu-icon"></i>
+                    </button>
+                    <ul id="tenant-menu" class="hidden pl-4 mt-1 space-y-1">
+                        <li><button onclick="showPage('tenant')" class="w-full flex items-center px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg text-sm page-btn" data-page="tenant"><i class="fa-solid fa-users w-4 mr-2 text-gray-400"></i>租户列表</button></li>
+                        <li><button onclick="showPage('package')" class="w-full flex items-center px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg text-sm page-btn" data-page="package"><i class="fa-solid fa-box w-4 mr-2 text-gray-400"></i>套餐管理</button></li>
+                    </ul>
+                </li>
+                
+                <li>
+                    <button onclick="showPage('api')" class="w-full flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-all group page-btn" data-page="api">
+                        <i class="fa-solid fa-code w-5 text-center mr-3 text-gray-400 group-hover:text-blue-500"></i>
+                        <span>API管理</span>
+                    </button>
+                </li>
+                
+                <li>
+                    <button onclick="showPage('dict')" class="w-full flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-all group page-btn" data-page="dict">
+                        <i class="fa-solid fa-book-open w-5 text-center mr-3 text-gray-400 group-hover:text-blue-500"></i>
+                        <span>字典管理</span>
+                    </button>
+                </li>
+                
+                <li>
+                    <button class="w-full flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-all group" onclick="toggleSubmenu('log-menu')">
+                        <i class="fa-solid fa-file-text w-5 text-center mr-3 text-gray-400 group-hover:text-blue-500"></i>
+                        <span>日志管理</span>
+                        <i class="fa-solid fa-chevron-right w-5 ml-auto text-gray-400 transition-transform" id="log-menu-icon"></i>
+                    </button>
+                    <ul id="log-menu" class="hidden pl-4 mt-1 space-y-1">
+                        <li><button onclick="showPage('login-log')" class="w-full flex items-center px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg text-sm page-btn" data-page="login-log"><i class="fa-solid fa-sign-in w-4 mr-2 text-gray-400"></i>登录日志</button></li>
+                        <li><button onclick="showPage('operation-log')" class="w-full flex items-center px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg text-sm page-btn" data-page="operation-log"><i class="fa-solid fa-mouse-pointer w-4 mr-2 text-gray-400"></i>操作日志</button></li>
+                    </ul>
+                </li>
+            </ul>
+        </nav>
+        
+        <div class="p-4 border-t border-gray-100">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full flex items-center justify-center text-white">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="font-medium text-gray-800 text-sm truncate">admin</div>
+                    <div class="text-xs text-gray-500">超级管理员</div>
+                </div>
+                <button class="p-2 hover:bg-gray-100 rounded-lg text-gray-500">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
+        </div>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col overflow-hidden">
+        <!-- Header -->
+        <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6">
+            <div class="flex flex-col">
+                <h2 class="text-lg font-semibold text-gray-800" id="page-title">控制台</h2>
+                <nav class="flex items-center text-sm text-gray-500" id="breadcrumb">
+                    <span class="hover:text-gray-700 cursor-pointer">首页</span>
+                    <i class="fa-solid fa-chevron-right mx-1 text-gray-400"></i>
+                    <span class="text-gray-700">控制台</span>
+                </nav>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button class="p-2 hover:bg-gray-100 rounded-lg text-gray-500 relative">
+                    <i class="fa-solid fa-bell"></i>
+                    <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                </button>
+                <button class="p-2 hover:bg-gray-100 rounded-lg text-gray-500">
+                    <i class="fa-solid fa-gear"></i>
+                </button>
+                <div class="h-6 w-px bg-gray-200"></div>
+                <span class="text-sm text-gray-500">最后登录: 2024-01-15 10:30:00</span>
+            </div>
+        </header>
+        
+        <!-- Page Content -->
+        <div class="flex-1 overflow-y-auto scrollbar-thin p-6" id="page-content">
+            <!-- Dashboard -->
+            <div id="page-dashboard" class="page-content page-enter">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-500 mb-1">用户总数</p>
+                                <p class="text-3xl font-bold text-gray-800">1,234</p>
+                                <p class="text-xs text-green-500 mt-2"><i class="fa-solid fa-trending-up mr-1"></i> 较上周 +12%</p>
+                            </div>
+                            <div class="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
+                                <i class="fa-solid fa-users text-blue-500 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-500 mb-1">租户数量</p>
+                                <p class="text-3xl font-bold text-gray-800">56</p>
+                                <p class="text-xs text-green-500 mt-2"><i class="fa-solid fa-trending-up mr-1"></i> 较上周 +5%</p>
+                            </div>
+                            <div class="w-12 h-12 bg-purple-50 rounded-lg flex items-center justify-center">
+                                <i class="fa-solid fa-building text-purple-500 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-500 mb-1">角色数量</p>
+                                <p class="text-3xl font-bold text-gray-800">23</p>
+                                <p class="text-xs text-gray-400 mt-2"><i class="fa-solid fa-minus mr-1"></i> 无变化</p>
+                            </div>
+                            <div class="w-12 h-12 bg-indigo-50 rounded-lg flex items-center justify-center">
+                                <i class="fa-solid fa-shield-halved text-indigo-500 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-500 mb-1">今日登录</p>
+                                <p class="text-3xl font-bold text-gray-800">89</p>
+                                <p class="text-xs text-red-500 mt-2"><i class="fa-solid fa-trending-down mr-1"></i> 较昨日 -8%</p>
+                            </div>
+                            <div class="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
+                                <i class="fa-solid fa-chart-line text-green-500 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                        <h3 class="font-semibold text-gray-800 mb-4">最近操作日志</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-start space-x-3">
+                                <div class="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                                <div class="flex-1">
+                                    <p class="text-sm text-gray-800"><span class="font-medium">admin</span> 创建了用户 <span class="text-blue-600">张三</span></p>
+                                    <p class="text-xs text-gray-500 mt-1">2024-01-15 14:30:00</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start space-x-3">
+                                <div class="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
+                                <div class="flex-1">
+                                    <p class="text-sm text-gray-800"><span class="font-medium">admin</span> 更新了角色 <span class="text-blue-600">管理员</span></p>
+                                    <p class="text-xs text-gray-500 mt-1">2024-01-15 14:25:00</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start space-x-3">
+                                <div class="w-2 h-2 bg-orange-500 rounded-full mt-2"></div>
+                                <div class="flex-1">
+                                    <p class="text-sm text-gray-800"><span class="font-medium">admin</span> 创建了租户 <span class="text-blue-600">新租户</span></p>
+                                    <p class="text-xs text-gray-500 mt-1">2024-01-15 14:20:00</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start space-x-3">
+                                <div class="w-2 h-2 bg-red-500 rounded-full mt-2"></div>
+                                <div class="flex-1">
+                                    <p class="text-sm text-gray-800"><span class="font-medium">admin</span> 删除了用户 <span class="text-blue-600">李四</span></p>
+                                    <p class="text-xs text-gray-500 mt-1">2024-01-15 14:15:00</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                        <h3 class="font-semibold text-gray-800 mb-4">系统状态</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="text-gray-600">API 服务</span>
+                                    <span class="text-green-600 font-medium">正常</span>
+                                </div>
+                                <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                    <div class="h-full bg-green-500 rounded-full" style="width: 100%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="text-gray-600">认证服务</span>
+                                    <span class="text-green-600 font-medium">正常</span>
+                                </div>
+                                <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                    <div class="h-full bg-green-500 rounded-full" style="width: 100%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="text-gray-600">数据库</span>
+                                    <span class="text-green-600 font-medium">正常</span>
+                                </div>
+                                <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                    <div class="h-full bg-green-500 rounded-full" style="width: 95%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="text-gray-600">Redis</span>
+                                    <span class="text-green-600 font-medium">正常</span>
+                                </div>
+                                <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                    <div class="h-full bg-green-500 rounded-full" style="width: 100%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- User Management -->
+            <div id="page-user" class="page-content hidden">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+                        <h3 class="font-semibold text-gray-800">用户管理</h3>
+                        <div class="flex items-center space-x-3">
+                            <button id="batch-delete-btn" class="flex items-center space-x-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors opacity-50 cursor-not-allowed">
+                                <i class="fa-solid fa-trash"></i>
+                                <span>批量删除</span>
+                            </button>
+                            <button onclick="openModal('user-modal')" class="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                                <i class="fa-solid fa-plus"></i>
+                                <span>新增用户</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-center space-x-4 mb-6">
+                            <div class="relative">
+                                <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                                <input type="text" id="user-search-input" placeholder="搜索用户名/昵称/手机号" class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg w-64 focus:ring-2 focus:ring-blue-500 focus:border-transparent" onkeydown="if(event.key==='Enter') searchUsers()">
+                            </div>
+                            <select id="user-status-select" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="">全部状态</option>
+                                <option value="active">启用</option>
+                                <option value="inactive">禁用</option>
+                            </select>
+                            <select id="user-dept-select" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="">全部部门</option>
+                                <option value="tech">技术部</option>
+                                <option value="product">产品部</option>
+                                <option value="test">测试部</option>
+                            </select>
+                            <button onclick="searchUsers()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-1">
+                                <i class="fa-solid fa-search"></i>
+                                <span>搜索</span>
+                            </button>
+                            <button onclick="resetUserSearch()" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors">
+                                重置
+                            </button>
+                        </div>
+                        
+                        <div class="table-responsive">
+                            <table id="user-table" class="w-full">
+                                <thead>
+                                    <tr class="bg-gray-50">
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600 w-12">
+                                            <input type="checkbox" class="select-all w-4 h-4 text-blue-600 border-gray-300 rounded" onclick="toggleSelectAll('user-table')">
+                                        </th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">用户名</th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">昵称</th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">手机号</th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">邮箱</th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">部门</th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">角色</th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">状态</th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">最后登录</th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    <tr>
+                                        <td class="px-4 py-3">
+                                            <input type="checkbox" class="w-4 h-4 text-blue-600 border-gray-300 rounded" onclick="toggleRowCheckbox('user-table')">
+                                        </td>
+                                        <td class="px-4 py-3 text-sm text-gray-800">admin</td>
+                                        <td class="px-4 py-3 text-sm text-gray-800">超级管理员</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">138****8888</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">admin@saas-zero.com</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">技术部</td>
+                                        <td class="px-4 py-3 text-sm">
+                                            <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">超级管理员</span>
+                                        </td>
+                                        <td class="px-4 py-3 text-sm">
+                                            <span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">启用</span>
+                                        </td>
+                                        <td class="px-4 py-3 text-sm text-gray-500">2024-01-15 10:30:00</td>
+                                        <td class="px-4 py-3 text-sm">
+                                            <button class="text-blue-600 hover:text-blue-700 mr-3"><i class="fa-solid fa-edit"></i></button>
+                                            <button onclick="openModal('reset-password-modal')" class="text-orange-600 hover:text-orange-700 mr-3"><i class="fa-solid fa-key"></i></button>
+                                            <button onclick="openModal('user-assign-roles-modal')" class="text-purple-600 hover:text-purple-700 mr-3"><i class="fa-solid fa-user-check"></i></button>
+                                            <button class="text-red-600 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-3">
+                                            <input type="checkbox" class="w-4 h-4 text-blue-600 border-gray-300 rounded" onclick="toggleRowCheckbox('user-table')">
+                                        </td>
+                                        <td class="px-4 py-3 text-sm text-gray-800">zhangsan</td>
+                                        <td class="px-4 py-3 text-sm text-gray-800">张三</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">139****6666</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">zhangsan@saas-zero.com</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">产品部</td>
+                                        <td class="px-4 py-3 text-sm">
+                                            <span class="bg-indigo-100 text-indigo-700 px-2 py-1 rounded text-xs">管理员</span>
+                                        </td>
+                                        <td class="px-4 py-3 text-sm">
+                                            <span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">启用</span>
+                                        </td>
+                                        <td class="px-4 py-3 text-sm text-gray-500">2024-01-14 15:20:00</td>
+                                        <td class="px-4 py-3 text-sm">
+                                            <button class="text-blue-600 hover:text-blue-700 mr-3"><i class="fa-solid fa-edit"></i></button>
+                                            <button onclick="openModal('reset-password-modal')" class="text-orange-600 hover:text-orange-700 mr-3"><i class="fa-solid fa-key"></i></button>
+                                            <button onclick="openModal('user-assign-roles-modal')" class="text-purple-600 hover:text-purple-700 mr-3"><i class="fa-solid fa-user-check"></i></button>
+                                            <button class="text-red-600 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-3">
+                                            <input type="checkbox" class="w-4 h-4 text-blue-600 border-gray-300 rounded" onclick="toggleRowCheckbox('user-table')">
+                                        </td>
+                                        <td class="px-4 py-3 text-sm text-gray-800">lisi</td>
+                                        <td class="px-4 py-3 text-sm text-gray-800">李四</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">137****5555</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">lisi@saas-zero.com</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">测试部</td>
+                                        <td class="px-4 py-3 text-sm">
+                                            <span class="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">普通用户</span>
+                                        </td>
+                                        <td class="px-4 py-3 text-sm">
+                                            <span class="bg-red-100 text-red-700 px-2 py-1 rounded text-xs">禁用</span>
+                                        </td>
+                                        <td class="px-4 py-3 text-sm text-gray-500">2024-01-10 09:15:00</td>
+                                        <td class="px-4 py-3 text-sm">
+                                            <button class="text-blue-600 hover:text-blue-700 mr-3"><i class="fa-solid fa-edit"></i></button>
+                                            <button onclick="openModal('reset-password-modal')" class="text-orange-600 hover:text-orange-700 mr-3"><i class="fa-solid fa-key"></i></button>
+                                            <button onclick="openModal('user-assign-roles-modal')" class="text-purple-600 hover:text-purple-700 mr-3"><i class="fa-solid fa-user-check"></i></button>
+                                            <button class="text-red-600 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="flex items-center justify-between mt-6">
+                            <div class="text-sm text-gray-500">共 1234 条数据，当前显示 1-10 条</div>
+                            <div class="flex items-center space-x-2">
+                                <button class="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50">上一页</button>
+                                <button class="px-3 py-1 bg-blue-600 text-white rounded-lg text-sm">1</button>
+                                <button class="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">2</button>
+                                <button class="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">3</button>
+                                <button class="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">...</button>
+                                <button class="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">124</button>
+                                <button class="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">下一页</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Role Management -->
+            <div id="page-role" class="page-content hidden">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+                        <h3 class="font-semibold text-gray-800">角色管理</h3>
+                        <div class="flex items-center space-x-3">
+                            <button class="flex items-center space-x-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors opacity-50 cursor-not-allowed">
+                                <i class="fa-solid fa-trash"></i>
+                                <span>批量删除</span>
+                            </button>
+                            <button onclick="openModal('role-modal')" class="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                                <i class="fa-solid fa-plus"></i>
+                                <span>新增角色</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-center space-x-4 mb-6">
+                            <div class="relative">
+                                <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                                <input type="text" placeholder="搜索角色名称/编码" class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg w-64 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                            <select class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option>全部状态</option>
+                                <option>启用</option>
+                                <option>禁用</option>
+                            </select>
+                            <button class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors">
+                                搜索
+                            </button>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table id="role-table" class="w-full">
+                                <thead>
+                                    <tr class="bg-gray-50">
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600 w-12">
+                                            <input type="checkbox" class="select-all w-4 h-4 text-blue-600 border-gray-300 rounded" onclick="toggleSelectAll('role-table')">
+                                        </th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">角色名称</th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">角色编码</th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">状态</th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">排序</th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">备注</th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">创建时间</th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    <tr>
+                                        <td class="px-4 py-3">
+                                            <input type="checkbox" class="w-4 h-4 text-blue-600 border-gray-300 rounded" onclick="toggleRowCheckbox('role-table')">
+                                        </td>
+                                        <td class="px-4 py-3 text-sm text-gray-800">超级管理员</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">admin</td>
+                                        <td class="px-4 py-3 text-sm"><span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">启用</span></td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">1</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">系统最高权限</td>
+                                        <td class="px-4 py-3 text-sm text-gray-500">2024-01-01 00:00:00</td>
+                                        <td class="px-4 py-3 text-sm">
+                                            <button class="text-blue-600 hover:text-blue-700 mr-3"><i class="fa-solid fa-edit"></i></button>
+                                            <button onclick="openModal('role-assign-menus-modal')" class="text-purple-600 hover:text-purple-700 mr-3" title="分配菜单"><i class="fa-solid fa-bars"></i></button>
+                                            <button onclick="openModal('role-assign-apis-modal')" class="text-indigo-600 hover:text-indigo-700 mr-3" title="分配API"><i class="fa-solid fa-code"></i></button>
+                                            <button class="text-red-600 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-3">
+                                            <input type="checkbox" class="w-4 h-4 text-blue-600 border-gray-300 rounded" onclick="toggleRowCheckbox('role-table')">
+                                        </td>
+                                        <td class="px-4 py-3 text-sm text-gray-800">管理员</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">manager</td>
+                                        <td class="px-4 py-3 text-sm"><span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">启用</span></td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">2</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">租户管理员</td>
+                                        <td class="px-4 py-3 text-sm text-gray-500">2024-01-02 10:00:00</td>
+                                        <td class="px-4 py-3 text-sm">
+                                            <button class="text-blue-600 hover:text-blue-700 mr-3"><i class="fa-solid fa-edit"></i></button>
+                                            <button onclick="openModal('role-assign-menus-modal')" class="text-purple-600 hover:text-purple-700 mr-3" title="分配菜单"><i class="fa-solid fa-bars"></i></button>
+                                            <button onclick="openModal('role-assign-apis-modal')" class="text-indigo-600 hover:text-indigo-700 mr-3" title="分配API"><i class="fa-solid fa-code"></i></button>
+                                            <button class="text-red-600 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-3">
+                                            <input type="checkbox" class="w-4 h-4 text-blue-600 border-gray-300 rounded" onclick="toggleRowCheckbox('role-table')">
+                                        </td>
+                                        <td class="px-4 py-3 text-sm text-gray-800">普通用户</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">user</td>
+                                        <td class="px-4 py-3 text-sm"><span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">启用</span></td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">3</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">普通权限用户</td>
+                                        <td class="px-4 py-3 text-sm text-gray-500">2024-01-03 14:00:00</td>
+                                        <td class="px-4 py-3 text-sm">
+                                            <button class="text-blue-600 hover:text-blue-700 mr-3"><i class="fa-solid fa-edit"></i></button>
+                                            <button onclick="openModal('role-assign-menus-modal')" class="text-purple-600 hover:text-purple-700 mr-3" title="分配菜单"><i class="fa-solid fa-bars"></i></button>
+                                            <button onclick="openModal('role-assign-apis-modal')" class="text-indigo-600 hover:text-indigo-700 mr-3" title="分配API"><i class="fa-solid fa-code"></i></button>
+                                            <button class="text-red-600 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="flex items-center justify-between mt-6">
+                            <div class="text-sm text-gray-500">共 23 条数据，当前显示 1-10 条</div>
+                            <div class="flex items-center space-x-2">
+                                <button class="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50">上一页</button>
+                                <button class="px-3 py-1 bg-blue-600 text-white rounded-lg text-sm">1</button>
+                                <button class="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">2</button>
+                                <button class="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">3</button>
+                                <button class="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">下一页</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Menu Management -->
+            <div id="page-menu" class="page-content hidden">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+                        <h3 class="font-semibold text-gray-800">菜单管理</h3>
+                        <button onclick="openModal('menu-modal')" class="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>新增菜单</span>
+                        </button>
+                    </div>
+                    <div class="p-6">
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="bg-gray-50">
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">菜单名称</th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">菜单类型</th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">路径</th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">图标</th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">状态</th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">排序</th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    <tr>
+                                        <td class="px-4 py-3 text-sm text-gray-800 font-medium">系统管理</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600"><span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">目录</span></td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">/system</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600"><i class="fa-solid fa-sitemap"></i></td>
+                                        <td class="px-4 py-3 text-sm"><span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">启用</span></td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">1</td>
+                                        <td class="px-4 py-3 text-sm">
+                                            <button class="text-blue-600 hover:text-blue-700 mr-3"><i class="fa-solid fa-edit"></i></button>
+                                            <button class="text-red-600 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-3 text-sm text-gray-800 tree-indent">用户管理</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600"><span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">菜单</span></td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">/system/user</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600"><i class="fa-solid fa-user"></i></td>
+                                        <td class="px-4 py-3 text-sm"><span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">启用</span></td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">1</td>
+                                        <td class="px-4 py-3 text-sm">
+                                            <button class="text-blue-600 hover:text-blue-700 mr-3"><i class="fa-solid fa-edit"></i></button>
+                                            <button class="text-red-600 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-3 text-sm text-gray-800 tree-indent">角色管理</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600"><span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">菜单</span></td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">/system/role</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600"><i class="fa-solid fa-shield-halved"></i></td>
+                                        <td class="px-4 py-3 text-sm"><span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">启用</span></td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">2</td>
+                                        <td class="px-4 py-3 text-sm">
+                                            <button class="text-blue-600 hover:text-blue-700 mr-3"><i class="fa-solid fa-edit"></i></button>
+                                            <button class="text-red-600 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-3 text-sm text-gray-800">租户管理</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600"><span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">目录</span></td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">/tenant</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600"><i class="fa-solid fa-building-circle"></i></td>
+                                        <td class="px-4 py-3 text-sm"><span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">启用</span></td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">2</td>
+                                        <td class="px-4 py-3 text-sm">
+                                            <button class="text-blue-600 hover:text-blue-700 mr-3"><i class="fa-solid fa-edit"></i></button>
+                                            <button class="text-red-600 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-3 text-sm text-gray-800 tree-indent">租户列表</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600"><span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">菜单</span></td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">/tenant/list</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600"><i class="fa-solid fa-users"></i></td>
+                                        <td class="px-4 py-3 text-sm"><span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">启用</span></td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">1</td>
+                                        <td class="px-4 py-3 text-sm">
+                                            <button class="text-blue-600 hover:text-blue-700 mr-3"><i class="fa-solid fa-edit"></i></button>
+                                            <button class="text-red-600 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Dept Management -->
+            <div id="page-dept" class="page-content hidden">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+                        <h3 class="font-semibold text-gray-800">部门管理</h3>
+                        <button onclick="openModal('dept-modal')" class="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>新增部门</span>
+                        </button>
+                    </div>
+                    <div class="p-6">
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="bg-gray-50">
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">部门名称</th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">负责人</th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">联系电话</th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">状态</th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">排序</th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    <tr>
+                                        <td class="px-4 py-3 text-sm text-gray-800 font-medium">总部</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">张三</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">010-12345678</td>
+                                        <td class="px-4 py-3 text-sm"><span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">启用</span></td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">1</td>
+                                        <td class="px-4 py-3 text-sm">
+                                            <button class="text-blue-600 hover:text-blue-700 mr-3"><i class="fa-solid fa-edit"></i></button>
+                                            <button class="text-red-600 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-3 text-sm text-gray-800 tree-indent">技术部</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">李四</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">010-12345679</td>
+                                        <td class="px-4 py-3 text-sm"><span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">启用</span></td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">1</td>
+                                        <td class="px-4 py-3 text-sm">
+                                            <button class="text-blue-600 hover:text-blue-700 mr-3"><i class="fa-solid fa-edit"></i></button>
+                                            <button class="text-red-600 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-3 text-sm text-gray-800 tree-indent">产品部</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">王五</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">010-12345680</td>
+                                        <td class="px-4 py-3 text-sm"><span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">启用</span></td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">2</td>
+                                        <td class="px-4 py-3 text-sm">
+                                            <button class="text-blue-600 hover:text-blue-700 mr-3"><i class="fa-solid fa-edit"></i></button>
+                                            <button class="text-red-600 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-3 text-sm text-gray-800 tree-indent">测试部</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">赵六</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">010-12345681</td>
+                                        <td class="px-4 py-3 text-sm"><span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">启用</span></td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">3</td>
+                                        <td class="px-4 py-3 text-sm">
+                                            <button class="text-blue-600 hover:text-blue-700 mr-3"><i class="fa-solid fa-edit"></i></button>
+                                            <button class="text-red-600 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-3 text-sm text-gray-800 tree-indent">市场部</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">钱七</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">010-12345682</td>
+                                        <td class="px-4 py-3 text-sm"><span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">启用</span></td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">4</td>
+                                        <td class="px-4 py-3 text-sm">
+                                            <button class="text-blue-600 hover:text-blue-700 mr-3"><i class="fa-solid fa-edit"></i></button>
+                                            <button class="text-red-600 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tenant Management -->
+            <div id="page-tenant" class="page-content hidden">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+                        <h3 class="font-semibold text-gray-800">租户管理</h3>
+                        <button onclick="openModal('tenant-modal')" class="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>新增租户</span>
+                        </button>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-center space-x-4 mb-6">
+                            <div class="relative">
+                                <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                                <input type="text" placeholder="搜索租户名称/编码" class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg w-64 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                            <select class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option>全部状态</option>
+                                <option>正常</option>
+                                <option>冻结</option>
+                                <option>过期</option>
+                            </select>
+                            <button class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors">
+                                搜索
+                            </button>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="bg-gray-50">
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">租户名称</th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">租户编码</th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">管理员</th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">套餐</th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">到期时间</th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">状态</th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">创建时间</th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    <tr>
+                                        <td class="px-4 py-3 text-sm text-gray-800">默认租户</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">default</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">admin</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">标准版</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">2099-12-31</td>
+                                        <td class="px-4 py-3 text-sm"><span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">正常</span></td>
+                                        <td class="px-4 py-3 text-sm text-gray-500">2024-01-01 00:00:00</td>
+                                        <td class="px-4 py-3 text-sm">
+                                            <button class="text-blue-600 hover:text-blue-700 mr-3"><i class="fa-solid fa-edit"></i></button>
+                                            <button class="text-orange-600 hover:text-orange-700 mr-3"><i class="fa-solid fa-toggle-on"></i></button>
+                                            <button class="text-red-600 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-3 text-sm text-gray-800">客户A</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">customer_a</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">user_a</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">专业版</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">2025-01-15</td>
+                                        <td class="px-4 py-3 text-sm"><span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">正常</span></td>
+                                        <td class="px-4 py-3 text-sm text-gray-500">2024-01-15 10:00:00</td>
+                                        <td class="px-4 py-3 text-sm">
+                                            <button class="text-blue-600 hover:text-blue-700 mr-3"><i class="fa-solid fa-edit"></i></button>
+                                            <button class="text-orange-600 hover:text-orange-700 mr-3"><i class="fa-solid fa-toggle-on"></i></button>
+                                            <button class="text-red-600 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="flex items-center justify-between mt-6">
+                            <div class="text-sm text-gray-500">共 56 条数据，当前显示 1-10 条</div>
+                            <div class="flex items-center space-x-2">
+                                <button class="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">上一页</button>
+                                <button class="px-3 py-1 bg-blue-600 text-white rounded-lg text-sm">1</button>
+                                <button class="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">2</button>
+                                <button class="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">3</button>
+                                <button class="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">下一页</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Package Management -->
+            <div id="page-package" class="page-content hidden">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+                        <h3 class="font-semibold text-gray-800">套餐管理</h3>
+                        <button onclick="openModal('package-modal')" class="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>新增套餐</span>
+                        </button>
+                    </div>
+                    <div class="p-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div class="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow">
+                                <div class="flex items-start justify-between mb-4">
+                                    <div>
+                                        <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs mb-2 inline-block">标准版</span>
+                                        <h4 class="font-semibold text-gray-800">基础版</h4>
+                                    </div>
+                                    <div class="text-2xl font-bold text-blue-600">¥99</div>
+                                </div>
+                                <p class="text-sm text-gray-600 mb-4">适合小型团队使用，提供基础功能</p>
+                                <ul class="space-y-2 text-sm text-gray-600 mb-6">
+                                    <li class="flex items-center"><i class="fa-solid fa-check text-green-500 mr-2"></i>最多 10 个用户</li>
+                                    <li class="flex items-center"><i class="fa-solid fa-check text-green-500 mr-2"></i>基础权限管理</li>
+                                    <li class="flex items-center"><i class="fa-solid fa-check text-green-500 mr-2"></i>1 年有效期</li>
+                                </ul>
+                                <div class="flex space-x-2">
+                                    <button class="flex-1 text-blue-600 border border-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 text-sm">编辑</button>
+                                    <button class="flex-1 text-red-600 border border-red-600 px-4 py-2 rounded-lg hover:bg-red-50 text-sm">删除</button>
+                                </div>
+                            </div>
+                            <div class="border-2 border-blue-600 rounded-xl p-6 bg-blue-50/50">
+                                <div class="flex items-start justify-between mb-4">
+                                    <div>
+                                        <span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs mb-2 inline-block">专业版</span>
+                                        <h4 class="font-semibold text-gray-800">专业版</h4>
+                                    </div>
+                                    <div class="text-2xl font-bold text-blue-600">¥299</div>
+                                </div>
+                                <p class="text-sm text-gray-600 mb-4">适合中型企业，功能完整</p>
+                                <ul class="space-y-2 text-sm text-gray-600 mb-6">
+                                    <li class="flex items-center"><i class="fa-solid fa-check text-green-500 mr-2"></i>最多 100 个用户</li>
+                                    <li class="flex items-center"><i class="fa-solid fa-check text-green-500 mr-2"></i>完整权限管理</li>
+                                    <li class="flex items-center"><i class="fa-solid fa-check text-green-500 mr-2"></i>API 访问权限</li>
+                                    <li class="flex items-center"><i class="fa-solid fa-check text-green-500 mr-2"></i>3 年有效期</li>
+                                </ul>
+                                <div class="flex space-x-2">
+                                    <button class="flex-1 text-blue-600 border border-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 text-sm">编辑</button>
+                                    <button class="flex-1 text-red-600 border border-red-600 px-4 py-2 rounded-lg hover:bg-red-50 text-sm">删除</button>
+                                </div>
+                            </div>
+                            <div class="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow">
+                                <div class="flex items-start justify-between mb-4">
+                                    <div>
+                                        <span class="bg-purple-100 text-purple-700 px-2 py-1 rounded text-xs mb-2 inline-block">旗舰版</span>
+                                        <h4 class="font-semibold text-gray-800">旗舰版</h4>
+                                    </div>
+                                    <div class="text-2xl font-bold text-blue-600">¥999</div>
+                                </div>
+                                <p class="text-sm text-gray-600 mb-4">适合大型企业，无限扩展</p>
+                                <ul class="space-y-2 text-sm text-gray-600 mb-6">
+                                    <li class="flex items-center"><i class="fa-solid fa-check text-green-500 mr-2"></i>无限用户</li>
+                                    <li class="flex items-center"><i class="fa-solid fa-check text-green-500 mr-2"></i>高级权限管理</li>
+                                    <li class="flex items-center"><i class="fa-solid fa-check text-green-500 mr-2"></i>完整 API 权限</li>
+                                    <li class="flex items-center"><i class="fa-solid fa-check text-green-500 mr-2"></i>永久有效</li>
+                                    <li class="flex items-center"><i class="fa-solid fa-check text-green-500 mr-2"></i>专属技术支持</li>
+                                </ul>
+                                <div class="flex space-x-2">
+                                    <button class="flex-1 text-blue-600 border border-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 text-sm">编辑</button>
+                                    <button class="flex-1 text-red-600 border border-red-600 px-4 py-2 rounded-lg hover:bg-red-50 text-sm">删除</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- API Management -->
+            <div id="page-api" class="page-content hidden">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+                        <h3 class="font-semibold text-gray-800">API管理</h3>
+                        <button onclick="openModal('api-modal')" class="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>新增API</span>
+                        </button>
+                    </div>
+                    <div class="p-6">
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="bg-gray-50">
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">API名称</th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">API路径</th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">请求方法</th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">类型</th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">状态</th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    <tr>
+                                        <td class="px-4 py-3 text-sm text-gray-800">创建用户</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">/system/user/create</td>
+                                        <td class="px-4 py-3 text-sm"><span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">POST</span></td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">系统管理</td>
+                                        <td class="px-4 py-3 text-sm"><span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">启用</span></td>
+                                        <td class="px-4 py-3 text-sm">
+                                            <button class="text-blue-600 hover:text-blue-700 mr-3"><i class="fa-solid fa-edit"></i></button>
+                                            <button class="text-red-600 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-3 text-sm text-gray-800">用户列表</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">/system/user/list</td>
+                                        <td class="px-4 py-3 text-sm"><span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">GET</span></td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">系统管理</td>
+                                        <td class="px-4 py-3 text-sm"><span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">启用</span></td>
+                                        <td class="px-4 py-3 text-sm">
+                                            <button class="text-blue-600 hover:text-blue-700 mr-3"><i class="fa-solid fa-edit"></i></button>
+                                            <button class="text-red-600 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-3 text-sm text-gray-800">更新用户</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">/system/user/update</td>
+                                        <td class="px-4 py-3 text-sm"><span class="bg-orange-100 text-orange-700 px-2 py-1 rounded text-xs">PUT</span></td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">系统管理</td>
+                                        <td class="px-4 py-3 text-sm"><span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">启用</span></td>
+                                        <td class="px-4 py-3 text-sm">
+                                            <button class="text-blue-600 hover:text-blue-700 mr-3"><i class="fa-solid fa-edit"></i></button>
+                                            <button class="text-red-600 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Dict Management -->
+            <div id="page-dict" class="page-content hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-1 bg-white rounded-xl shadow-sm border border-gray-100">
+                        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+                            <h3 class="font-semibold text-gray-800">字典列表</h3>
+                            <button onclick="openModal('dict-modal')" class="flex items-center space-x-2 bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-colors text-sm">
+                                <i class="fa-solid fa-plus"></i>
+                                <span>新增</span>
+                            </button>
+                        </div>
+                        <div class="p-4">
+                            <div class="space-y-2">
+                                <div class="p-3 bg-blue-50 rounded-lg cursor-pointer border border-blue-200">
+                                    <div class="font-medium text-gray-800">用户状态</div>
+                                    <div class="text-xs text-gray-500">user_status</div>
+                                </div>
+                                <div class="p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
+                                    <div class="font-medium text-gray-800">性别</div>
+                                    <div class="text-xs text-gray-500">gender</div>
+                                </div>
+                                <div class="p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
+                                    <div class="font-medium text-gray-800">菜单类型</div>
+                                    <div class="text-xs text-gray-500">menu_type</div>
+                                </div>
+                                <div class="p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
+                                    <div class="font-medium text-gray-800">租户状态</div>
+                                    <div class="text-xs text-gray-500">tenant_status</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100">
+                        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+                            <h3 class="font-semibold text-gray-800">字典数据 - 用户状态</h3>
+                            <button onclick="openModal('dict-data-modal')" class="flex items-center space-x-2 bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-colors text-sm">
+                                <i class="fa-solid fa-plus"></i>
+                                <span>新增数据</span>
+                            </button>
+                        </div>
+                        <div class="p-6">
+                            <div class="overflow-x-auto">
+                                <table class="w-full">
+                                    <thead>
+                                        <tr class="bg-gray-50">
+                                            <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">标签</th>
+                                            <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">键值</th>
+                                            <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">状态</th>
+                                            <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">备注</th>
+                                            <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-100">
+                                        <tr>
+                                            <td class="px-4 py-3 text-sm text-gray-800">启用</td>
+                                            <td class="px-4 py-3 text-sm text-gray-600">active</td>
+                                            <td class="px-4 py-3 text-sm"><span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">启用</span></td>
+                                            <td class="px-4 py-3 text-sm text-gray-600">正常使用</td>
+                                            <td class="px-4 py-3 text-sm">
+                                                <button class="text-blue-600 hover:text-blue-700 mr-3"><i class="fa-solid fa-edit"></i></button>
+                                                <button class="text-red-600 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-4 py-3 text-sm text-gray-800">禁用</td>
+                                            <td class="px-4 py-3 text-sm text-gray-600">inactive</td>
+                                            <td class="px-4 py-3 text-sm"><span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">启用</span></td>
+                                            <td class="px-4 py-3 text-sm text-gray-600">禁止登录</td>
+                                            <td class="px-4 py-3 text-sm">
+                                                <button class="text-blue-600 hover:text-blue-700 mr-3"><i class="fa-solid fa-edit"></i></button>
+                                                <button class="text-red-600 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Login Log -->
+            <div id="page-login-log" class="page-content hidden">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+                        <h3 class="font-semibold text-gray-800">登录日志</h3>
+                    </div>
+                    <div class="p-6">
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="bg-gray-50">
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">用户名</th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">登录IP</th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">状态</th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">消息</th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">登录时间</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    <tr>
+                                        <td class="px-4 py-3 text-sm text-gray-800">admin</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">192.168.1.100</td>
+                                        <td class="px-4 py-3 text-sm"><span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">成功</span></td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">登录成功</td>
+                                        <td class="px-4 py-3 text-sm text-gray-500">2024-01-15 10:30:00</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-3 text-sm text-gray-800">zhangsan</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">192.168.1.101</td>
+                                        <td class="px-4 py-3 text-sm"><span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">成功</span></td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">登录成功</td>
+                                        <td class="px-4 py-3 text-sm text-gray-500">2024-01-15 09:20:00</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Operation Log -->
+            <div id="page-operation-log" class="page-content hidden">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+                        <h3 class="font-semibold text-gray-800">操作日志</h3>
+                    </div>
+                    <div class="p-6">
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="bg-gray-50">
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">操作人</th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">模块</th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">操作</th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">请求路径</th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">状态</th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">耗时</th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">操作时间</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    <tr>
+                                        <td class="px-4 py-3 text-sm text-gray-800">admin</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">用户管理</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">创建用户</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">/system/user/create</td>
+                                        <td class="px-4 py-3 text-sm"><span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">成功</span></td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">56ms</td>
+                                        <td class="px-4 py-3 text-sm text-gray-500">2024-01-15 14:30:00</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-3 text-sm text-gray-800">admin</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">角色管理</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">更新角色</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">/system/role/update</td>
+                                        <td class="px-4 py-3 text-sm"><span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">成功</span></td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">32ms</td>
+                                        <td class="px-4 py-3 text-sm text-gray-500">2024-01-15 14:25:00</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Modals -->
+<div id="modal-overlay" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50">
+    <div id="user-modal" class="bg-white rounded-xl w-full max-w-lg p-6 hidden modal-content">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-semibold text-gray-800">新增用户</h3>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">用户名</label>
+                <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="请输入用户名">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">密码</label>
+                <input type="password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="请输入密码">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">昵称</label>
+                <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="请输入昵称">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">部门</label>
+                <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option>请选择部门</option>
+                    <option>技术部</option>
+                    <option>产品部</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">角色</label>
+                <div class="flex flex-wrap gap-2">
+                    <label class="flex items-center space-x-2 px-3 py-2 border border-gray-300 rounded-lg cursor-pointer hover:border-blue-500">
+                        <input type="checkbox" class="text-blue-600">
+                        <span class="text-sm">超级管理员</span>
+                    </label>
+                    <label class="flex items-center space-x-2 px-3 py-2 border border-gray-300 rounded-lg cursor-pointer hover:border-blue-500">
+                        <input type="checkbox" class="text-blue-600">
+                        <span class="text-sm">管理员</span>
+                    </label>
+                    <label class="flex items-center space-x-2 px-3 py-2 border border-gray-300 rounded-lg cursor-pointer hover:border-blue-500">
+                        <input type="checkbox" class="text-blue-600">
+                        <span class="text-sm">普通用户</span>
+                    </label>
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">状态</label>
+                <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option>启用</option>
+                    <option>禁用</option>
+                </select>
+            </div>
+        </div>
+        <div class="flex justify-end space-x-3 mt-6">
+            <button onclick="closeModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">取消</button>
+            <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">确定</button>
+        </div>
+    </div>
+    
+    <div id="role-modal" class="bg-white rounded-xl w-full max-w-lg p-6 hidden modal-content">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-semibold text-gray-800">新增角色</h3>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">角色名称</label>
+                <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="请输入角色名称">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">角色编码</label>
+                <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="请输入角色编码">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">排序</label>
+                <input type="number" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="请输入排序号">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">状态</label>
+                <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option>启用</option>
+                    <option>禁用</option>
+                </select>
+            </div>
+        </div>
+        <div class="flex justify-end space-x-3 mt-6">
+            <button onclick="closeModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">取消</button>
+            <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">确定</button>
+        </div>
+    </div>
+    
+    <div id="menu-modal" class="bg-white rounded-xl w-full max-w-lg p-6 hidden modal-content">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-semibold text-gray-800">新增菜单</h3>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">菜单名称</label>
+                <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="请输入菜单名称">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">菜单类型</label>
+                <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option>目录</option>
+                    <option>菜单</option>
+                    <option>按钮</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">上级菜单</label>
+                <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option>无</option>
+                    <option>系统管理</option>
+                    <option>租户管理</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">路由路径</label>
+                <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="请输入路由路径">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">状态</label>
+                <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option>启用</option>
+                    <option>禁用</option>
+                </select>
+            </div>
+        </div>
+        <div class="flex justify-end space-x-3 mt-6">
+            <button onclick="closeModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">取消</button>
+            <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">确定</button>
+        </div>
+    </div>
+    
+    <div id="dept-modal" class="bg-white rounded-xl w-full max-w-lg p-6 hidden modal-content">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-semibold text-gray-800">新增部门</h3>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">部门名称</label>
+                <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="请输入部门名称">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">上级部门</label>
+                <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option>无</option>
+                    <option>总部</option>
+                    <option>技术部</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">负责人</label>
+                <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option>请选择负责人</option>
+                    <option>张三</option>
+                    <option>李四</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">状态</label>
+                <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option>启用</option>
+                    <option>禁用</option>
+                </select>
+            </div>
+        </div>
+        <div class="flex justify-end space-x-3 mt-6">
+            <button onclick="closeModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">取消</button>
+            <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">确定</button>
+        </div>
+    </div>
+    
+    <div id="tenant-modal" class="bg-white rounded-xl w-full max-w-lg p-6 hidden modal-content">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-semibold text-gray-800">新增租户</h3>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">租户名称</label>
+                <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="请输入租户名称">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">租户编码</label>
+                <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="请输入租户编码">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">管理员账号</label>
+                <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="请输入管理员账号">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">套餐</label>
+                <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option>基础版</option>
+                    <option>专业版</option>
+                    <option>旗舰版</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">到期时间</label>
+                <input type="date" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            </div>
+        </div>
+        <div class="flex justify-end space-x-3 mt-6">
+            <button onclick="closeModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">取消</button>
+            <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">确定</button>
+        </div>
+    </div>
+    
+    <div id="package-modal" class="bg-white rounded-xl w-full max-w-lg p-6 hidden modal-content">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-semibold text-gray-800">新增套餐</h3>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">套餐名称</label>
+                <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="请输入套餐名称">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">套餐编码</label>
+                <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="请输入套餐编码">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">价格</label>
+                <input type="number" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="请输入价格">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">状态</label>
+                <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option>启用</option>
+                    <option>禁用</option>
+                </select>
+            </div>
+        </div>
+        <div class="flex justify-end space-x-3 mt-6">
+            <button onclick="closeModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">取消</button>
+            <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">确定</button>
+        </div>
+    </div>
+    
+    <div id="api-modal" class="bg-white rounded-xl w-full max-w-lg p-6 hidden modal-content">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-semibold text-gray-800">新增API</h3>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">API名称</label>
+                <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="请输入API名称">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">API路径</label>
+                <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="请输入API路径">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">请求方法</label>
+                <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option>GET</option>
+                    <option>POST</option>
+                    <option>PUT</option>
+                    <option>DELETE</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">状态</label>
+                <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option>启用</option>
+                    <option>禁用</option>
+                </select>
+            </div>
+        </div>
+        <div class="flex justify-end space-x-3 mt-6">
+            <button onclick="closeModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">取消</button>
+            <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">确定</button>
+        </div>
+    </div>
+    
+    <div id="dict-modal" class="bg-white rounded-xl w-full max-w-lg p-6 hidden modal-content">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-semibold text-gray-800">新增字典</h3>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">字典名称</label>
+                <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="请输入字典名称">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">字典键值</label>
+                <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="请输入字典键值">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">状态</label>
+                <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option>启用</option>
+                    <option>禁用</option>
+                </select>
+            </div>
+        </div>
+        <div class="flex justify-end space-x-3 mt-6">
+            <button onclick="closeModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">取消</button>
+            <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">确定</button>
+        </div>
+    </div>
+    
+    <div id="dict-data-modal" class="bg-white rounded-xl w-full max-w-lg p-6 hidden modal-content">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-semibold text-gray-800">新增字典数据</h3>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">标签名称</label>
+                <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="请输入标签名称">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">键值</label>
+                <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="请输入键值">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">状态</label>
+                <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option>启用</option>
+                    <option>禁用</option>
+                </select>
+            </div>
+        </div>
+        <div class="flex justify-end space-x-3 mt-6">
+            <button onclick="closeModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">取消</button>
+            <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">确定</button>
+        </div>
+    </div>
+
+    <div id="role-assign-menus-modal" class="bg-white rounded-xl w-full max-w-3xl p-6 hidden modal-content">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-semibold text-gray-800">分配菜单权限</h3>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="bg-gray-50 rounded-lg p-4 mb-4">
+            <div class="flex items-center justify-between">
+                <span class="text-sm text-gray-600">当前角色: <span class="font-medium text-gray-800">管理员</span></span>
+                <button onclick="toggleAllMenuCheckboxes(true)" class="text-sm text-blue-600 hover:text-blue-700">全选</button>
+                <button onclick="toggleAllMenuCheckboxes(false)" class="text-sm text-blue-600 hover:text-blue-700">取消全选</button>
+            </div>
+        </div>
+        <div class="space-y-4 max-h-96 overflow-y-auto scrollbar-thin">
+            <div class="flex items-center space-x-3">
+                <input type="checkbox" class="w-4 h-4 text-blue-600 border-gray-300 rounded">
+                <div class="flex-1">
+                    <div class="font-medium text-gray-800">系统管理</div>
+                    <div class="text-xs text-gray-500">/system</div>
+                </div>
+            </div>
+            <div class="ml-6 space-y-3">
+                <div class="flex items-center space-x-3">
+                    <input type="checkbox" class="w-4 h-4 text-blue-600 border-gray-300 rounded">
+                    <div class="flex-1">
+                        <div class="text-sm text-gray-800">用户管理</div>
+                        <div class="text-xs text-gray-500">/system/user</div>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <input type="checkbox" class="w-4 h-4 text-blue-600 border-gray-300 rounded">
+                    <div class="flex-1">
+                        <div class="text-sm text-gray-800">角色管理</div>
+                        <div class="text-xs text-gray-500">/system/role</div>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <input type="checkbox" class="w-4 h-4 text-blue-600 border-gray-300 rounded">
+                    <div class="flex-1">
+                        <div class="text-sm text-gray-800">菜单管理</div>
+                        <div class="text-xs text-gray-500">/system/menu</div>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <input type="checkbox" class="w-4 h-4 text-blue-600 border-gray-300 rounded">
+                    <div class="flex-1">
+                        <div class="text-sm text-gray-800">部门管理</div>
+                        <div class="text-xs text-gray-500">/system/dept</div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <input type="checkbox" class="w-4 h-4 text-blue-600 border-gray-300 rounded">
+                <div class="flex-1">
+                    <div class="font-medium text-gray-800">租户管理</div>
+                    <div class="text-xs text-gray-500">/tenant</div>
+                </div>
+            </div>
+            <div class="ml-6 space-y-3">
+                <div class="flex items-center space-x-3">
+                    <input type="checkbox" class="w-4 h-4 text-blue-600 border-gray-300 rounded">
+                    <div class="flex-1">
+                        <div class="text-sm text-gray-800">租户列表</div>
+                        <div class="text-xs text-gray-500">/tenant/list</div>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <input type="checkbox" class="w-4 h-4 text-blue-600 border-gray-300 rounded">
+                    <div class="flex-1">
+                        <div class="text-sm text-gray-800">套餐管理</div>
+                        <div class="text-xs text-gray-500">/tenant/package</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="flex justify-end space-x-3 mt-6">
+            <button onclick="closeModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">取消</button>
+            <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">确定</button>
+        </div>
+    </div>
+
+    <div id="role-assign-apis-modal" class="bg-white rounded-xl w-full max-w-3xl p-6 hidden modal-content">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-semibold text-gray-800">分配API权限</h3>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="bg-gray-50 rounded-lg p-4 mb-4">
+            <div class="flex items-center justify-between">
+                <span class="text-sm text-gray-600">当前角色: <span class="font-medium text-gray-800">管理员</span></span>
+                <button onclick="toggleAllApiCheckboxes(true)" class="text-sm text-blue-600 hover:text-blue-700">全选</button>
+                <button onclick="toggleAllApiCheckboxes(false)" class="text-sm text-blue-600 hover:text-blue-700">取消全选</button>
+            </div>
+        </div>
+        <div class="space-y-3 max-h-96 overflow-y-auto scrollbar-thin">
+            <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                <input type="checkbox" class="w-4 h-4 text-blue-600 border-gray-300 rounded">
+                <span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs">POST</span>
+                <span class="text-sm text-gray-800 flex-1">创建用户</span>
+                <span class="text-xs text-gray-500">/system/user/create</span>
+            </div>
+            <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                <input type="checkbox" class="w-4 h-4 text-blue-600 border-gray-300 rounded">
+                <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs">GET</span>
+                <span class="text-sm text-gray-800 flex-1">用户列表</span>
+                <span class="text-xs text-gray-500">/system/user/list</span>
+            </div>
+            <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                <input type="checkbox" class="w-4 h-4 text-blue-600 border-gray-300 rounded">
+                <span class="bg-orange-100 text-orange-700 px-2 py-0.5 rounded text-xs">PUT</span>
+                <span class="text-sm text-gray-800 flex-1">更新用户</span>
+                <span class="text-xs text-gray-500">/system/user/update</span>
+            </div>
+            <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                <input type="checkbox" class="w-4 h-4 text-blue-600 border-gray-300 rounded">
+                <span class="bg-red-100 text-red-700 px-2 py-0.5 rounded text-xs">DELETE</span>
+                <span class="text-sm text-gray-800 flex-1">删除用户</span>
+                <span class="text-xs text-gray-500">/system/user/delete</span>
+            </div>
+            <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                <input type="checkbox" class="w-4 h-4 text-blue-600 border-gray-300 rounded">
+                <span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs">POST</span>
+                <span class="text-sm text-gray-800 flex-1">创建角色</span>
+                <span class="text-xs text-gray-500">/system/role/create</span>
+            </div>
+            <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                <input type="checkbox" class="w-4 h-4 text-blue-600 border-gray-300 rounded">
+                <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs">GET</span>
+                <span class="text-sm text-gray-800 flex-1">角色列表</span>
+                <span class="text-xs text-gray-500">/system/role/list</span>
+            </div>
+            <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                <input type="checkbox" class="w-4 h-4 text-blue-600 border-gray-300 rounded">
+                <span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs">POST</span>
+                <span class="text-sm text-gray-800 flex-1">分配菜单</span>
+                <span class="text-xs text-gray-500">/system/role/assignMenus</span>
+            </div>
+            <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                <input type="checkbox" class="w-4 h-4 text-blue-600 border-gray-300 rounded">
+                <span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs">POST</span>
+                <span class="text-sm text-gray-800 flex-1">分配API</span>
+                <span class="text-xs text-gray-500">/system/role/assignApis</span>
+            </div>
+        </div>
+        <div class="flex justify-end space-x-3 mt-6">
+            <button onclick="closeModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">取消</button>
+            <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">确定</button>
+        </div>
+    </div>
+
+    <div id="user-assign-roles-modal" class="bg-white rounded-xl w-full max-w-lg p-6 hidden modal-content">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-semibold text-gray-800">分配角色</h3>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="bg-gray-50 rounded-lg p-4 mb-4">
+            <span class="text-sm text-gray-600">当前用户: <span class="font-medium text-gray-800">张三</span></span>
+        </div>
+        <div class="space-y-3">
+            <label class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">
+                <input type="checkbox" class="w-4 h-4 text-blue-600 border-gray-300 rounded">
+                <div class="flex-1">
+                    <div class="font-medium text-gray-800">超级管理员</div>
+                    <div class="text-xs text-gray-500">系统最高权限</div>
+                </div>
+            </label>
+            <label class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">
+                <input type="checkbox" class="w-4 h-4 text-blue-600 border-gray-300 rounded" checked>
+                <div class="flex-1">
+                    <div class="font-medium text-gray-800">管理员</div>
+                    <div class="text-xs text-gray-500">租户管理员</div>
+                </div>
+            </label>
+            <label class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">
+                <input type="checkbox" class="w-4 h-4 text-blue-600 border-gray-300 rounded">
+                <div class="flex-1">
+                    <div class="font-medium text-gray-800">普通用户</div>
+                    <div class="text-xs text-gray-500">普通权限用户</div>
+                </div>
+            </label>
+            <label class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">
+                <input type="checkbox" class="w-4 h-4 text-blue-600 border-gray-300 rounded">
+                <div class="flex-1">
+                    <div class="font-medium text-gray-800">只读用户</div>
+                    <div class="text-xs text-gray-500">仅查看权限</div>
+                </div>
+            </label>
+        </div>
+        <div class="flex justify-end space-x-3 mt-6">
+            <button onclick="closeModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">取消</button>
+            <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">确定</button>
+        </div>
+    </div>
+
+    <div id="reset-password-modal" class="bg-white rounded-xl w-full max-w-md p-6 hidden modal-content">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-semibold text-gray-800">重置密码</h3>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="bg-gray-50 rounded-lg p-4 mb-4">
+            <span class="text-sm text-gray-600">重置用户 <span class="font-medium text-gray-800">张三</span> 的密码</span>
+        </div>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">新密码</label>
+                <input type="password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="请输入新密码">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">确认密码</label>
+                <input type="password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="请确认新密码">
+            </div>
+        </div>
+        <div class="flex justify-end space-x-3 mt-6">
+            <button onclick="closeModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">取消</button>
+            <button class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700">重置</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const togglePassword = document.getElementById('toggle-password');
+    const passwordInput = document.getElementById('password');
+    
+    togglePassword.addEventListener('click', () => {
+        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        passwordInput.setAttribute('type', type);
+        togglePassword.classList.toggle('fa-eye-slash');
+    });
+    
+    document.getElementById('login-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        document.getElementById('login-page').classList.add('hidden');
+        document.getElementById('admin-layout').classList.remove('hidden');
+        showPage('dashboard');
+    });
+    
+    function showPage(pageName) {
+        document.querySelectorAll('.page-content').forEach(el => el.classList.add('hidden'));
+        document.getElementById('page-' + pageName).classList.remove('hidden');
+        
+        const titles = {
+            'dashboard': '控制台',
+            'user': '用户管理',
+            'role': '角色管理',
+            'menu': '菜单管理',
+            'dept': '部门管理',
+            'tenant': '租户管理',
+            'package': '套餐管理',
+            'api': 'API管理',
+            'dict': '字典管理',
+            'login-log': '登录日志',
+            'operation-log': '操作日志'
+        };
+        
+        const breadcrumbs = {
+            'dashboard': [
+                { name: '首页', url: 'dashboard' },
+                { name: '控制台', url: null }
+            ],
+            'user': [
+                { name: '首页', url: 'dashboard' },
+                { name: '系统管理', url: null },
+                { name: '用户管理', url: null }
+            ],
+            'role': [
+                { name: '首页', url: 'dashboard' },
+                { name: '系统管理', url: null },
+                { name: '角色管理', url: null }
+            ],
+            'menu': [
+                { name: '首页', url: 'dashboard' },
+                { name: '系统管理', url: null },
+                { name: '菜单管理', url: null }
+            ],
+            'dept': [
+                { name: '首页', url: 'dashboard' },
+                { name: '系统管理', url: null },
+                { name: '部门管理', url: null }
+            ],
+            'tenant': [
+                { name: '首页', url: 'dashboard' },
+                { name: '租户管理', url: null },
+                { name: '租户列表', url: null }
+            ],
+            'package': [
+                { name: '首页', url: 'dashboard' },
+                { name: '租户管理', url: null },
+                { name: '套餐管理', url: null }
+            ],
+            'api': [
+                { name: '首页', url: 'dashboard' },
+                { name: 'API管理', url: null }
+            ],
+            'dict': [
+                { name: '首页', url: 'dashboard' },
+                { name: '字典管理', url: null }
+            ],
+            'login-log': [
+                { name: '首页', url: 'dashboard' },
+                { name: '日志管理', url: null },
+                { name: '登录日志', url: null }
+            ],
+            'operation-log': [
+                { name: '首页', url: 'dashboard' },
+                { name: '日志管理', url: null },
+                { name: '操作日志', url: null }
+            ]
+        };
+        
+        document.getElementById('page-title').textContent = titles[pageName] || pageName;
+        
+        const breadcrumbNav = document.getElementById('breadcrumb');
+        const bcData = breadcrumbs[pageName] || breadcrumbs['dashboard'];
+        let bcHtml = '';
+        bcData.forEach((item, index) => {
+            if (item.url) {
+                bcHtml += `<span class="hover:text-gray-700 cursor-pointer" onclick="showPage('${item.url}')">${item.name}</span>`;
+            } else {
+                bcHtml += `<span class="${index === bcData.length - 1 ? 'text-gray-700 font-medium' : 'text-gray-500'}">${item.name}</span>`;
+            }
+            if (index < bcData.length - 1) {
+                bcHtml += `<i class="fa-solid fa-chevron-right mx-1 text-gray-400"></i>`;
+            }
+        });
+        breadcrumbNav.innerHTML = bcHtml;
+        
+        document.querySelectorAll('.page-btn').forEach(el => {
+            el.classList.remove('bg-blue-50', 'text-blue-600');
+            el.classList.add('text-gray-600');
+        });
+        const activeBtn = document.querySelector(`.page-btn[data-page="${pageName}"]`);
+        if (activeBtn) {
+            activeBtn.classList.remove('text-gray-600');
+            activeBtn.classList.add('bg-blue-50', 'text-blue-600');
+        }
+    }
+    
+    function toggleSubmenu(menuId) {
+        const menu = document.getElementById(menuId);
+        const icon = document.getElementById(menuId + '-icon');
+        menu.classList.toggle('hidden');
+        icon.classList.toggle('rotate-90');
+    }
+    
+    function openModal(modalId) {
+        const overlay = document.getElementById('modal-overlay');
+        overlay.classList.remove('hidden');
+        overlay.classList.add('animate-fade-in');
+        document.querySelectorAll('.modal-content').forEach(el => {
+            el.classList.add('hidden');
+            el.classList.remove('modal-enter');
+        });
+        const modal = document.getElementById(modalId);
+        modal.classList.remove('hidden');
+        setTimeout(() => modal.classList.add('modal-enter'), 10);
+    }
+
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        sidebar.classList.toggle('sidebar-collapsed');
+    }
+    
+    function closeModal() {
+        document.getElementById('modal-overlay').classList.add('hidden');
+    }
+    
+    document.getElementById('modal-overlay').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('modal-overlay')) {
+            closeModal();
+        }
+    });
+
+    function toggleAllMenuCheckboxes(checked) {
+        document.querySelectorAll('#role-assign-menus-modal input[type="checkbox"]').forEach(el => {
+            el.checked = checked;
+        });
+    }
+
+    function toggleAllApiCheckboxes(checked) {
+        document.querySelectorAll('#role-assign-apis-modal input[type="checkbox"]').forEach(el => {
+            el.checked = checked;
+        });
+    }
+
+    function toggleSelectAll(tableId) {
+        const table = document.getElementById(tableId);
+        const allCheckbox = table.querySelector('.select-all');
+        const checkboxes = table.querySelectorAll('tbody input[type="checkbox"]');
+        checkboxes.forEach(cb => cb.checked = allCheckbox.checked);
+        updateBatchButton();
+    }
+
+    function toggleRowCheckbox(tableId) {
+        const table = document.getElementById(tableId);
+        const allCheckbox = table.querySelector('.select-all');
+        const checkboxes = table.querySelectorAll('tbody input[type="checkbox"]');
+        const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+        allCheckbox.checked = allChecked;
+        updateBatchButton();
+    }
+
+    function updateBatchButton() {
+        const selectedCount = document.querySelectorAll('tbody input[type="checkbox"]:checked').length;
+        const batchBtn = document.getElementById('batch-delete-btn');
+        if (batchBtn) {
+            if (selectedCount > 0) {
+                batchBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                batchBtn.textContent = `批量删除 (${selectedCount})`;
+            } else {
+                batchBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                batchBtn.textContent = '批量删除';
+            }
+        }
+    }
+
+    function showToast(message, type = 'success') {
+        const toast = document.createElement('div');
+        const bgColors = {
+            success: 'bg-green-500',
+            error: 'bg-red-500',
+            warning: 'bg-yellow-500',
+            info: 'bg-blue-500'
+        };
+        toast.className = `fixed top-4 right-4 ${bgColors[type]} text-white px-4 py-3 rounded-lg shadow-lg z-50 animate-fade-in flex items-center space-x-2`;
+        toast.innerHTML = `
+            <i class="fa-solid fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : type === 'warning' ? 'alert-triangle' : 'info-circle'}"></i>
+            <span>${message}</span>
+        `;
+        document.body.appendChild(toast);
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transition = 'opacity 0.3s';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
+    function searchUsers() {
+        const keyword = document.getElementById('user-search-input').value;
+        const status = document.getElementById('user-status-select').value;
+        const dept = document.getElementById('user-dept-select').value;
+        
+        let searchDesc = '搜索条件: ';
+        if (keyword) searchDesc += `关键词 "${keyword}" `;
+        if (status) searchDesc += `状态 "${status === 'active' ? '启用' : '禁用'}" `;
+        if (dept) searchDesc += `部门 "${dept === 'tech' ? '技术部' : dept === 'product' ? '产品部' : '测试部'}"`;
+        
+        if (searchDesc === '搜索条件: ') {
+            searchDesc = '搜索条件: 全部';
+        }
+        
+        showToast(searchDesc, 'info');
+    }
+
+    function resetUserSearch() {
+        document.getElementById('user-search-input').value = '';
+        document.getElementById('user-status-select').value = '';
+        document.getElementById('user-dept-select').value = '';
+        showToast('搜索条件已重置', 'info');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const confirmButtons = document.querySelectorAll('.modal-content button:last-child');
+        confirmButtons.forEach(btn => {
+            if (btn.textContent !== '取消') {
+                btn.addEventListener('click', () => {
+                    if (btn.textContent === '重置') {
+                        showToast('密码重置成功', 'success');
+                    } else if (btn.textContent === '批量删除') {
+                        showToast('已删除选中数据', 'success');
+                    } else {
+                        showToast('操作成功', 'success');
+                    }
+                    closeModal();
+                });
+            }
+        });
+
+        const deleteButtons = document.querySelectorAll('button:text-red-600');
+        deleteButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (confirm('确定要删除吗？')) {
+                    showToast('删除成功', 'success');
+                }
+            });
+        });
+    });
+</script>
+</body>
+</html>
