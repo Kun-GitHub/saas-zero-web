@@ -80,7 +80,7 @@ const AvatarContent: React.FC<{ currentUser?: SaaS.CurrentUser }> = ({ currentUs
   const { message } = App.useApp();
 
   const onLogout = useCallback(() => {
-    localStorage.removeItem('saas-zero-token');
+    sessionStorage.removeItem('saas-zero-token');
     message.success('已退出登录');
     history.push(loginPath);
   }, [message]);
@@ -160,7 +160,7 @@ export const request: RequestConfig = {
   baseURL: '',
   requestInterceptors: [
     (config: any) => {
-      const token = localStorage.getItem('saas-zero-token');
+      const token = sessionStorage.getItem('saas-zero-token');
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -182,10 +182,17 @@ export const request: RequestConfig = {
   ],
   errorConfig: {
     errorHandler: (error: any) => {
-      const { response } = error;
-      if (response && response.status === 401) {
-        localStorage.removeItem('saas-zero-token');
+      // HTTP-level 401 (middleware rejects with real HTTP 401)
+      if (error.response?.status === 401) {
+        sessionStorage.removeItem('saas-zero-token');
         history.push(loginPath);
+        return;
+      }
+      // Business-level token expired (code 1004 from API with HTTP 200)
+      if (error.code === 1004 || error.code === 1001 || error.code === 1002) {
+        sessionStorage.removeItem('saas-zero-token');
+        history.push(loginPath);
+        return;
       }
       return Promise.reject(error);
     },

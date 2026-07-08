@@ -193,7 +193,7 @@ const Login: React.FC = () => {
         captchaId,
         captchaVal: values.captcha,
       });
-      localStorage.setItem('saas-zero-token', result.token);
+      sessionStorage.setItem('saas-zero-token', result.token);
       const userInfo = await result.user;
       flushSync(() => {
         setInitialState((s: any) => ({

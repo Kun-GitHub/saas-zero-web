@@ -18,7 +18,7 @@ const DeptList: React.FC = () => {
 
   const columns: ProColumns<any>[] = [
     { title: f('entity.deptName'), dataIndex: 'name', width: 200 },
-    { title: f('entity.log.operator'), dataIndex: 'leader', width: 120, hideInSearch: true },
+    { title: f('entity.log.operator'), dataIndex: 'leaderName', width: 120, hideInSearch: true },
     { title: f('entity.mobile'), dataIndex: 'phone', width: 140, hideInSearch: true },
     { title: f('entity.status'), dataIndex: 'status', width: 80, render: (_, r) => <Tag color={r.status === 'active' ? 'green' : 'red'}>{f(`status.${r.status}`)}</Tag> },
     { title: f('entity.sort'), dataIndex: 'sort', width: 60, hideInSearch: true },
@@ -51,9 +51,8 @@ const DeptList: React.FC = () => {
         onCancel={() => setModalOpen(false)}
       >
         <Form form={form} layout="vertical">
-          <Form.Item name="name" label={f('entity.deptName')} rules={[{ required: true }]}><Input /></Form.Item>
-          <Form.Item name="leader" label={f('entity.log.operator')}><Input /></Form.Item>
-          <Form.Item name="phone" label={f('entity.mobile')}><Input /></Form.Item>
+          <Form.Item name="name" label={f('entity.deptName')} rules={[{ required: true }]}><Input /></Form.Item>            <Form.Item name="leaderId" label={f('entity.log.operator')}><Input /></Form.Item>
+          <Form.Item name="mobile" label={f('entity.mobile')}><Input /></Form.Item>
           <Form.Item name="sort" label={f('entity.sort')}><InputNumber style={{ width: '100%' }} /></Form.Item>
           <Form.Item name="status" label={f('entity.status')} rules={[{ required: true }]} initialValue="active">
             <Select options={[{ value: 'active', label: f('status.active') }, { value: 'inactive', label: f('status.inactive') }]} />

@@ -43,7 +43,7 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({
   children,
 }) => {
   const loginOut = async () => {
-    localStorage.removeItem('saas-zero-token');
+    sessionStorage.removeItem('saas-zero-token');
     const { search, pathname } = window.location;
     const urlParams = new URL(window.location.href).searchParams;
     const searchParams = new URLSearchParams({
