@@ -107,9 +107,13 @@ declare namespace SaaS {
   type SysMenu = {
     id: string;
     name: string;
-    type: string;
+    menuType: string;
     path?: string;
     icon?: string;
+    component?: string;
+    hidden?: boolean;
+    isRedirect?: boolean;
+    redirect?: string;
     status: string;
     sort: number;
     parentId?: string;

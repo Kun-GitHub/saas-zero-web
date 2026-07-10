@@ -30,8 +30,8 @@ const TenantList: React.FC = () => {
       title: f('entity.action'), width: 200, hideInSearch: true, render: (_, r) => (
         <Space>
           <Button type="link" size="small" onClick={() => { setEditRecord(r); form.setFieldsValue(r); setModalOpen(true); }}>{f('entity.edit')}</Button>
-          <Button type="link" size="small" icon={<SwapOutlined />} onClick={async () => { await changeTenantStatus(r.id, r.status === 'active' ? 'frozen' : 'active'); message.success(f('message.operationSuccess')); actionRef.current?.reload(); }}>{f('entity.status')}</Button>
-          <Button type="link" size="small" danger icon={<DeleteOutlined />} onClick={() => Modal.confirm({ title: f('pages.tenant.list.deleteConfirm'), onOk: async () => { await deleteTenant(r.id); message.success(f('message.deleteSuccess')); actionRef.current?.reload(); } })}>{f('entity.delete')}</Button>
+          <Button type="link" size="small" icon={<SwapOutlined />} onClick={async () => { await changeTenantStatus({ id: r.id, status: r.status === 'active' ? 'frozen' : 'active' }); message.success(f('message.operationSuccess')); actionRef.current?.reload(); }}>{f('entity.status')}</Button>
+          <Button type="link" size="small" danger icon={<DeleteOutlined />} onClick={() => Modal.confirm({ title: f('pages.tenant.list.deleteConfirm'), onOk: async () => { await deleteTenant([Number(r.id)]); message.success(f('message.deleteSuccess')); actionRef.current?.reload(); } })}>{f('entity.delete')}</Button>
         </Space>
       ),
     },

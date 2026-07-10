@@ -36,7 +36,7 @@ const PackageList: React.FC = () => {
               </div>
               <div style={{ marginTop: 16, display: 'flex', gap: 8 }}>
                 <Button style={{ flex: 1 }} onClick={() => { setEditRecord(pkg); form.setFieldsValue(pkg); setModalOpen(true); }}>{f('entity.edit')}</Button>
-                <Button style={{ flex: 1 }} danger icon={<DeleteOutlined />} onClick={() => Modal.confirm({ title: f('pages.tenant.package.deleteConfirm'), onOk: async () => { await deletePackage(pkg.id); message.success(f('message.deleteSuccess')); load(); } })}>{f('entity.delete')}</Button>
+                <Button style={{ flex: 1 }} danger icon={<DeleteOutlined />} onClick={() => Modal.confirm({ title: f('pages.tenant.package.deleteConfirm'), onOk: async () => { await deletePackage([Number(pkg.id)]); message.success(f('message.deleteSuccess')); load(); } })}>{f('entity.delete')}</Button>
               </div>
             </Card>
           </Col>

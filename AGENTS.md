@@ -86,8 +86,8 @@ saas-zero-web/
 
 ### 请求拦截器（`app.tsx`）
 1. **request interceptor**: 从 `sessionStorage` 读取 token，注入 `Authorization: Bearer <token>` 请求头
-2. **response interceptor**: 自动拆 `{ code, msg, data }` 信封 → 返回 `data`（`code !== 0` 时抛错）
-3. **error handler**: `401` 清除 token 并跳转到登录页
+2. **response interceptor**: 检查 `response.data.code`（Axios 响应结构）→ `code===0` 透传；`!==0` 抛错
+3. **error handler**: `code===401 || code===1004` 清除 token 并跳转到登录页
 
 ### 初始化数据流
 ```
@@ -118,7 +118,9 @@ POST /oauth/login { tenantCode, username, password, captchaId, captchaVal }
 }
 ```
 
-`app.tsx` 的 response interceptor 会自动拆包：`code===0` 时返回 `data`；`!==0` 时抛出 `Error(msg)`。
+`@umijs/max` 内部使用 **Axios**（`app.tsx` 的 responseInterceptors 接收 `AxiosResponse` 对象，`response.data` 才是 JSON body）。框架默认 `resolve(res.data)` 返回 JSON body `{ code, msg, data }`，**不自动拆包**。
+
+拦截器只负责：`code!==0` 时抛错（errorThrower 不处理 code 字段），`code===1004` 时清 token 跳登录。
 
 ### 服务函数写法
 
@@ -140,7 +142,7 @@ export async function getUserList(params: SaaS.UserQuery) {
 所有删除统一使用 `POST` + body `{ ids: number[] }`（匹配后端 `IdsReq`），不另写 `DELETE` 方法。
 
 ### 特殊处理
-`getCaptcha` 在 `auth.ts` 中手动拆包（防御性写法，兼容 interceptor 未命中场景）：
+`getCaptcha` 在 `auth.ts` 中手动拆包（框架返回 `{ code, msg, data }`，需提取 `data` 字段）：
 
 ```ts
 export async function getCaptcha() {
@@ -151,6 +153,8 @@ export async function getCaptcha() {
   return res as SaaS.CaptchaResult;
 }
 ```
+
+其他服务函数同理需从 `{ code, msg, data }` 结构取 data，或让全局 responseInterceptors 统一拆包。
 
 ## 类型定义
 
