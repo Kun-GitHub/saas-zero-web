@@ -143,6 +143,7 @@ export default {
   'entity.api.name': 'API名称',
   'entity.api.path': 'API路径',
   'entity.api.method': '请求方法',
+  'entity.api.type': 'API类型',
 
   'entity.tenant.name': '租户名称',
   'entity.tenant.code': '租户编码',

@@ -32,7 +32,7 @@ const PackageList: React.FC = () => {
               <Tag color="blue" style={{ marginBottom: 8 }}>{pkg.code}</Tag>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                 <h3 style={{ margin: 0 }}>{pkg.name}</h3>
-                <span style={{ fontSize: 22, fontWeight: 700, color: '#2563eb' }}>¥{pkg.price}</span>
+                <Tag color="green">{pkg.status === 'active' ? f('status.active') : f('status.inactive')}</Tag>
               </div>
               <div style={{ marginTop: 16, display: 'flex', gap: 8 }}>
                 <Button style={{ flex: 1 }} onClick={() => { setEditRecord(pkg); form.setFieldsValue(pkg); setModalOpen(true); }}>{f('entity.edit')}</Button>
@@ -55,7 +55,8 @@ const PackageList: React.FC = () => {
         <Form form={form} layout="vertical">
           <Form.Item name="name" label={f('entity.package.name')} rules={[{ required: true }]}><Input /></Form.Item>
           <Form.Item name="code" label={f('entity.package.code')} rules={[{ required: true }]}><Input /></Form.Item>
-          <Form.Item name="price" label={f('entity.package.price')} rules={[{ required: true }]}><InputNumber style={{ width: '100%' }} prefix="¥" /></Form.Item>
+          <Form.Item name="sort" label={f('entity.sort')}><InputNumber style={{ width: '100%' }} /></Form.Item>
+          <Form.Item name="remark" label={f('entity.remark')}><Input.TextArea /></Form.Item>
           <Form.Item name="status" label={f('entity.status')} rules={[{ required: true }]} initialValue="active">
             <Select options={[{ value: 'active', label: f('status.active') }, { value: 'inactive', label: f('status.inactive') }]} />
           </Form.Item>

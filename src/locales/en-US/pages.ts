@@ -143,6 +143,7 @@ export default {
   'entity.api.name': 'API Name',
   'entity.api.path': 'API Path',
   'entity.api.method': 'HTTP Method',
+  'entity.api.type': 'API Type',
 
   'entity.tenant.name': 'Tenant Name',
   'entity.tenant.code': 'Tenant Code',

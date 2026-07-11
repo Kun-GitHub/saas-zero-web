@@ -21,9 +21,9 @@ const TenantList: React.FC = () => {
   const columns: ProColumns<any>[] = [
     { title: f('entity.tenant.name'), dataIndex: 'name', width: 140 },
     { title: f('entity.tenant.code'), dataIndex: 'code', width: 120 },
-    { title: f('entity.tenant.admin'), dataIndex: 'admin', width: 100, hideInSearch: true },
+    { title: f('entity.tenant.admin'), dataIndex: 'adminId', width: 100, hideInSearch: true },
     { title: f('entity.tenant.package'), dataIndex: 'packageName', width: 100, hideInSearch: true },
-    { title: f('entity.tenant.expiry'), dataIndex: 'expiryDate', width: 120, hideInSearch: true },
+    { title: f('entity.tenant.expiry'), dataIndex: 'expiredAt', width: 120, hideInSearch: true },
     { title: f('entity.status'), dataIndex: 'status', width: 80, valueType: 'select', valueEnum: { active: { text: f('status.normal') }, frozen: { text: f('status.frozen') }, expired: { text: f('status.expired') } }, render: (_, r) => <Tag color={statusColor[r.status]}>{f(`status.${r.status}`)}</Tag> },
     { title: f('entity.createdAt'), dataIndex: 'createdAt', width: 170, hideInSearch: true },
     {
@@ -61,8 +61,8 @@ const TenantList: React.FC = () => {
         <Form form={form} layout="vertical">
           <Form.Item name="name" label={f('entity.tenant.name')} rules={[{ required: true }]}><Input /></Form.Item>
           <Form.Item name="code" label={f('entity.tenant.code')} rules={[{ required: true }]}><Input /></Form.Item>
-          <Form.Item name="admin" label={f('entity.tenant.admin')}><Input /></Form.Item>
-          <Form.Item name="expiryDate" label={f('entity.tenant.expiry')}><Input placeholder="2099-12-31" /></Form.Item>
+          <Form.Item name="adminId" label={f('entity.tenant.admin')}><Input placeholder="User ID" /></Form.Item>
+          <Form.Item name="expiredAt" label={f('entity.tenant.expiry')}><Input placeholder="2099-12-31" /></Form.Item>
           <Form.Item name="status" label={f('entity.status')} rules={[{ required: true }]} initialValue="active">
             <Select options={[{ value: 'active', label: f('status.active') }, { value: 'frozen', label: f('status.frozen') }]} />
           </Form.Item>

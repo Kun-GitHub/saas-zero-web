@@ -31,7 +31,8 @@ const DictPage: React.FC = () => {
   useEffect(() => { loadDicts(); }, []);
 
   const dictColumns = [
-    { title: f('entity.dict.label'), dataIndex: 'label', key: 'label' },
+    { title: f('entity.dict.name'), dataIndex: 'name', key: 'name' },
+    { title: f('entity.dict.key'), dataIndex: 'key', key: 'key' },
     { title: f('entity.dict.value'), dataIndex: 'value', key: 'value' },
     { title: f('entity.status'), dataIndex: 'status', key: 'status', render: (s: string) => <Tag color={s === 'active' ? 'green' : 'red'}>{f(`status.${s}`)}</Tag> },
     { title: f('entity.remark'), dataIndex: 'remark', key: 'remark' },
@@ -82,7 +83,8 @@ const DictPage: React.FC = () => {
         message.success(f('message.' + (editData ? 'updateSuccess' : 'createSuccess'))); setDataModal(false); if (selectedDict) loadDictData(selectedDict.id);
       }} onCancel={() => setDataModal(false)}>
         <Form form={dataForm} layout="vertical">
-          <Form.Item name="label" label={f('entity.dict.label')} rules={[{ required: true }]}><Input /></Form.Item>
+          <Form.Item name="name" label={f('entity.dict.name')} rules={[{ required: true }]}><Input /></Form.Item>
+          <Form.Item name="key" label={f('entity.dict.key')} rules={[{ required: true }]}><Input /></Form.Item>
           <Form.Item name="value" label={f('entity.dict.value')} rules={[{ required: true }]}><Input /></Form.Item>
           <Form.Item name="status" label={f('entity.status')} rules={[{ required: true }]} initialValue="active">
             <Select options={[{ value: 'active', label: f('status.active') }, { value: 'inactive', label: f('status.inactive') }]} />

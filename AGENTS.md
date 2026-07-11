@@ -289,13 +289,13 @@ npm run build       # 生产构建
 | 角色管理 | ✅ | CRUD ProTable + 分配菜单 Tree + 分配 API 复选框 |
 | 菜单管理 | ✅ | TreeTable CRUD |
 | 部门管理 | ✅ | TreeTable CRUD |
-| 字典管理 | ❌ | 未创建 |
-| 租户管理 | ❌ | 未创建 |
-| 套餐管理 | ❌ | 未创建 |
-| API管理 | ❌ | 未创建 |
-| 登录日志 | ❌ | 未创建 |
-| 操作日志 | ❌ | 未创建 |
-| 系统初始化 | ❌ | 未创建 |
+| 字典管理 | ✅ | 左右双栏布局 + 字典/字典数据 CRUD |
+| 租户管理 | ✅ | ProTable CRUD + 状态切换 |
+| 套餐管理 | ✅ | 卡片布局 CRUD |
+| API管理 | ✅ | ProTable CRUD + 按类型/方法筛选 |
+| 登录日志 | ✅ | ProTable 只读查询 |
+| 操作日志 | ✅ | ProTable 只读查询 |
+| 系统初始化 | ✅ | Steps 向导 + `/init/*` 分步/全量初始化 |
 
 ## 已知预存 TypeScript 错误
 

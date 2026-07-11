@@ -1,4 +1,4 @@
-import { useIntl } from '@umijs/max';
+import { request, useIntl } from '@umijs/max';
 import { App, Button, Card, Space, Steps } from 'antd';
 import React, { useState } from 'react';
 
@@ -18,19 +18,15 @@ const InitPage: React.FC = () => {
 
   const runInit = async () => {
     setLoading(true);
-    const apis = ['/init/package/create', '/init/tenant/create', '/init/role/create', '/init/user/create'];
-    for (let i = 0; i < apis.length; i++) {
-      try {
-        const resp = await fetch(apis[i], { method: 'POST' });
-        if (!resp.ok) throw new Error('fail');
-        setCurrent(i);
-      } catch {
-        message.error(f('pages.init.stepFailed').replace('{step}', String(i + 1)));
-        setLoading(false);
-        return;
-      }
+    try {
+      // 调用 /init/all 一次性创建所有初始数据 + Casbin 策略
+      const resp: any = await request('/init/all', { method: 'POST' });
+      if (resp && resp.code !== 0) throw new Error(resp.msg || 'fail');
+      setCurrent(3);
+      message.success(f('pages.init.success'));
+    } catch (e: any) {
+      message.error(e?.message || f('pages.init.stepFailed').replace('{step}', '1'));
     }
-    message.success(f('pages.init.success'));
     setLoading(false);
   };
 

@@ -12,9 +12,9 @@ const LoginLogList: React.FC = () => {
 
   const columns: ProColumns<any>[] = [
     { title: f('entity.username'), dataIndex: 'username', width: 120 },
-    { title: f('entity.log.ip'), dataIndex: 'ip', width: 140, hideInSearch: true },
+    { title: f('entity.log.ip'), dataIndex: 'loginIp', width: 140, hideInSearch: true },
     { title: f('entity.status'), dataIndex: 'status', width: 80, render: (_, r) => <Tag color={r.status === 'success' ? 'green' : 'red'}>{f(`status.${r.status}`)}</Tag> },
-    { title: f('entity.log.message'), dataIndex: 'message', width: 200, hideInSearch: true },
+    { title: f('entity.log.message'), dataIndex: 'msg', width: 200, hideInSearch: true },
     { title: f('entity.log.time'), dataIndex: 'loginAt', width: 170, hideInSearch: true },
   ];
 

@@ -158,10 +158,10 @@ declare namespace SaaS {
     id: string;
     name: string;
     code: string;
-    admin?: string;
+    adminId?: string;
     packageId?: string;
     packageName?: string;
-    expiryDate?: string;
+    expiredAt?: string;
     status: string;
     createdAt: string;
   };
@@ -178,7 +178,6 @@ declare namespace SaaS {
     id: string;
     name: string;
     code: string;
-    price: number;
     status: string;
     sort?: number;
     remark?: string;
@@ -186,18 +185,20 @@ declare namespace SaaS {
 
   type SysApi = {
     id: string;
-    name: string;
-    path: string;
-    method: string;
-    type?: string;
+    apiName: string;
+    apiPath: string;
+    apiMethod: string;
+    apiType?: string;
     status: string;
+    remark?: string;
   };
 
   type ApiQuery = {
     page: number;
     pageSize: number;
-    name?: string;
-    method?: string;
+    apiName?: string;
+    apiPath?: string;
+    apiType?: string;
     status?: string;
   };
 
@@ -211,7 +212,8 @@ declare namespace SaaS {
 
   type SysDictData = {
     id: string;
-    label: string;
+    name: string;
+    key: string;
     value: string;
     status: string;
     remark?: string;
@@ -221,21 +223,21 @@ declare namespace SaaS {
   type SysLoginLog = {
     id: string;
     username: string;
-    ip: string;
+    loginIp: string;
     status: string;
-    message?: string;
+    msg?: string;
     loginAt: string;
   };
 
   type SysOperationLog = {
     id: string;
-    operator: string;
+    operatorName: string;
     module: string;
-    action: string;
-    path: string;
+    operation: string;
+    requestUrl: string;
     status: string;
     duration: number;
-    operatedAt: string;
+    createdAt: string;
   };
 
   type EmptyResp = {
