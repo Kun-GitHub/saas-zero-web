@@ -4,7 +4,18 @@ import { ProTable } from '@ant-design/pro-components';
 import { useIntl } from '@umijs/max';
 import { App, Button, Form, Input, InputNumber, Modal, Select, Space, Tag } from 'antd';
 import React, { useRef, useState } from 'react';
-import { createDept, deleteDept, getDeptList, updateDept } from '@/services/saas-zero/dept';
+import { createDept, deleteDept, getDeptTree, updateDept } from '@/services/saas-zero/dept';
+
+const flattenTree = (items: any[], depth = 0): { id: string; name: string }[] => {
+  const result: { id: string; name: string }[] = [];
+  for (const item of items) {
+    result.push({ id: item.id, name: `${'  '.repeat(depth)}${depth > 0 ? '└ ' : ''}${item.name}` });
+    if (item.children?.length) {
+      result.push(...flattenTree(item.children, depth + 1));
+    }
+  }
+  return result;
+};
 
 const DeptList: React.FC = () => {
   const intl = useIntl();
@@ -13,8 +24,29 @@ const DeptList: React.FC = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [editRecord, setEditRecord] = useState<any>(null);
   const [form] = Form.useForm();
+  const [parentOptions, setParentOptions] = useState<{ id: string; name: string }[]>([]);
 
   const f = (id: string) => intl.formatMessage({ id });
+
+  const openCreateModal = async () => {
+    setEditRecord(null);
+    form.resetFields();
+    try {
+      const res = await getDeptTree();
+      setParentOptions(flattenTree(res));
+    } catch { setParentOptions([]); }
+    setModalOpen(true);
+  };
+
+  const openEditModal = async (record: any) => {
+    setEditRecord(record);
+    form.setFieldsValue(record);
+    try {
+      const res = await getDeptTree();
+      setParentOptions(flattenTree(res));
+    } catch { setParentOptions([]); }
+    setModalOpen(true);
+  };
 
   const columns: ProColumns<any>[] = [
     { title: f('entity.deptName'), dataIndex: 'name', width: 200 },
@@ -25,7 +57,7 @@ const DeptList: React.FC = () => {
     {
       title: f('entity.action'), width: 140, hideInSearch: true, render: (_, r) => (
         <Space>
-          <Button type="link" size="small" onClick={() => { setEditRecord(r); form.setFieldsValue(r); setModalOpen(true); }}>{f('entity.edit')}</Button>
+          <Button type="link" size="small" onClick={() => openEditModal(r)}>{f('entity.edit')}</Button>
           <Button type="link" size="small" danger icon={<DeleteOutlined />} onClick={() => Modal.confirm({ title: f('pages.system.dept.deleteConfirm'), onOk: async () => { await deleteDept([Number(r.id)]); message.success(f('message.deleteSuccess')); actionRef.current?.reload(); } })}>{f('entity.delete')}</Button>
         </Space>
       ),
@@ -36,8 +68,8 @@ const DeptList: React.FC = () => {
     <>
       <ProTable<any>
         rowKey="id" actionRef={actionRef} columns={columns}
-        request={async () => { const data = await getDeptList(); return { data, success: true, total: data.length }; }}
-        toolBarRender={() => [<Button key="create" type="primary" icon={<PlusOutlined />} onClick={() => { setEditRecord(null); form.resetFields(); setModalOpen(true); }}>{f('pages.system.dept.create')}</Button>]}
+        request={async () => { const res = await getDeptTree(); return { data: res, success: true, total: res.length }; }}
+        toolBarRender={() => [<Button key="create" type="primary" icon={<PlusOutlined />} onClick={openCreateModal}>{f('pages.system.dept.create')}</Button>]}
         search={false} pagination={false}
       />
       <Modal
@@ -51,8 +83,12 @@ const DeptList: React.FC = () => {
         onCancel={() => setModalOpen(false)}
       >
         <Form form={form} layout="vertical">
-          <Form.Item name="name" label={f('entity.deptName')} rules={[{ required: true }]}><Input /></Form.Item>            <Form.Item name="leaderId" label={f('entity.log.operator')}><Input /></Form.Item>
-          <Form.Item name="mobile" label={f('entity.mobile')}><Input /></Form.Item>
+          <Form.Item name="name" label={f('entity.deptName')} rules={[{ required: true }]}><Input /></Form.Item>
+          <Form.Item name="parentId" label={f('entity.menu.parent')}>
+            <Select allowClear options={parentOptions.map((o) => ({ value: Number(o.id), label: o.name }))} />
+          </Form.Item>
+          <Form.Item name="leaderId" label={f('entity.log.operator')}><Input /></Form.Item>
+          <Form.Item name="phone" label={f('entity.mobile')}><Input /></Form.Item>
           <Form.Item name="sort" label={f('entity.sort')}><InputNumber style={{ width: '100%' }} /></Form.Item>
           <Form.Item name="status" label={f('entity.status')} rules={[{ required: true }]} initialValue="active">
             <Select options={[{ value: 'active', label: f('status.active') }, { value: 'inactive', label: f('status.inactive') }]} />

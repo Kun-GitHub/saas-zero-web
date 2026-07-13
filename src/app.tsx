@@ -214,7 +214,7 @@ export const request: RequestConfig = {
       // Axios response: { data: body, status, ... }; body = { code, msg, data }
       const body = response?.data;
       if (body && body.code !== undefined) {
-        if (body.code !== 0) {
+        if (body.code !== 200) {
           if (body.code === 1004 || body.code === 401) {
             console.log('[API] token expired, logging out');
             sessionStorage.removeItem('saas-zero-token');
