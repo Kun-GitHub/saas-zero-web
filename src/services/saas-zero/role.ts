@@ -14,7 +14,7 @@ export async function updateRole(body: SaaS.RoleUpdate) {
   });
 }
 
-export async function deleteRole(ids: number[]) {
+export async function deleteRole(ids: string[]) {
   return request<SaaS.EmptyResp>('/system/role/delete', {
     method: 'POST',
     data: { ids },
@@ -28,7 +28,7 @@ export async function getRoleList(params: SaaS.RoleQuery) {
   });
 }
 
-export async function getRoleDetail(id: number) {
+export async function getRoleDetail(id: string) {
   return request<SaaS.SysRole>('/system/role/detail', {
     method: 'GET',
     params: { id },

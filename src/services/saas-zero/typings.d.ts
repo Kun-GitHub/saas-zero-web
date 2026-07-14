@@ -37,7 +37,8 @@ declare namespace SaaS {
   };
 
   type SysUser = {
-    id: string;
+    id?: string;
+    idStr?: string;
     username: string;
     nickname: string;
     mobile?: string;
@@ -77,7 +78,8 @@ declare namespace SaaS {
   type UserUpdate = UserCreate & { id: string };
 
   type SysRole = {
-    id: string;
+    id?: string;
+    idStr?: string;
     name: string;
     code: string;
     status: string;
@@ -105,7 +107,8 @@ declare namespace SaaS {
   type RoleUpdate = RoleCreate & { id: string };
 
   type SysMenu = {
-    id: string;
+    id?: string;
+    idStr?: string;
     name: string;
     menuType: string;
     path?: string;
@@ -133,7 +136,8 @@ declare namespace SaaS {
   type MenuUpdate = MenuCreate & { id: string };
 
   type SysDept = {
-    id: string;
+    id?: string;
+    idStr?: string;
     name: string;
     leader?: string;
     phone?: string;
@@ -155,7 +159,8 @@ declare namespace SaaS {
   type DeptUpdate = DeptCreate & { id: string };
 
   type SysTenant = {
-    id: string;
+    id?: string;
+    idStr?: string;
     name: string;
     code: string;
     adminId?: string;
@@ -175,7 +180,8 @@ declare namespace SaaS {
   };
 
   type SysPackage = {
-    id: string;
+    id?: string;
+    idStr?: string;
     name: string;
     code: string;
     status: string;
@@ -184,7 +190,8 @@ declare namespace SaaS {
   };
 
   type SysApi = {
-    id: string;
+    id?: string;
+    idStr?: string;
     apiName: string;
     apiPath: string;
     apiMethod: string;
@@ -203,7 +210,8 @@ declare namespace SaaS {
   };
 
   type SysDict = {
-    id: string;
+    id?: string;
+    idStr?: string;
     name: string;
     key: string;
     status: string;
@@ -211,7 +219,8 @@ declare namespace SaaS {
   };
 
   type SysDictData = {
-    id: string;
+    id?: string;
+    idStr?: string;
     name: string;
     key: string;
     value: string;
@@ -221,7 +230,8 @@ declare namespace SaaS {
   };
 
   type SysLoginLog = {
-    id: string;
+    id?: string;
+    idStr?: string;
     username: string;
     loginIp: string;
     status: string;
@@ -230,7 +240,8 @@ declare namespace SaaS {
   };
 
   type SysOperationLog = {
-    id: string;
+    id?: string;
+    idStr?: string;
     operatorName: string;
     module: string;
     operation: string;
@@ -246,38 +257,38 @@ declare namespace SaaS {
   };
 
   type RoleAssignMenus = {
-    id: number;
-    menuIds: number[];
+    id: string;
+    menuIds: string[];
   };
 
   type RoleAssignApis = {
-    id: number;
-    apiIds: number[];
+    id: string;
+    apiIds: string[];
   };
 
   type UserAssignRoles = {
-    id: number;
-    roleIds: number[];
+    id: string;
+    roleIds: string[];
   };
 
   type UserResetPassword = {
-    id: number;
+    id: string;
     password: string;
   };
 
   type IdsReq = {
-    ids: number[];
+    ids: string[];
   };
 
   type SysRoleMenuIds = {
-    menuIds: number[];
+    menuIds: string[];
   };
 
   type SysRoleApiIds = {
-    apiIds: number[];
+    apiIds: string[];
   };
 
   type SysUserRoleIds = {
-    roleIds: number[];
+    roleIds: string[];
   };
 }

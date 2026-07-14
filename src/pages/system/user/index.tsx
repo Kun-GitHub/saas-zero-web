@@ -28,7 +28,7 @@ const statusColor: Record<string, string> = {
 
 const UserList: React.FC = () => {
   const intl = useIntl();
-  const actionRef = useRef<ActionType>();
+  const actionRef = useRef<ActionType>(null);
   const { message } = App.useApp();
   const [modalOpen, setModalOpen] = useState(false);
   const [editRecord, setEditRecord] = useState<SaaS.SysUser | null>(null);
@@ -38,7 +38,7 @@ const UserList: React.FC = () => {
   const [roleModalOpen, setRoleModalOpen] = useState(false);
   const [roleUser, setRoleUser] = useState<SaaS.SysUser | null>(null);
   const [allRoles, setAllRoles] = useState<SaaS.SysRole[]>([]);
-  const [selectedRoleIds, setSelectedRoleIds] = useState<number[]>([]);
+  const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
 
   const [pwdModalOpen, setPwdModalOpen] = useState(false);
   const [pwdUser, setPwdUser] = useState<SaaS.SysUser | null>(null);
@@ -50,21 +50,101 @@ const UserList: React.FC = () => {
     { title: f('entity.username'), dataIndex: 'username', width: 120 },
     { title: f('entity.nickname'), dataIndex: 'nickname', width: 120 },
     { title: f('entity.mobile'), dataIndex: 'mobile', width: 130 },
-    { title: f('entity.email'), dataIndex: 'email', width: 180, hideInSearch: true },
-    { title: f('entity.dept'), dataIndex: 'deptName', width: 120, hideInSearch: true },
-    { title: f('entity.role'), dataIndex: 'roleNames', width: 160, hideInSearch: true, render: (_, r) => r.roleNames?.map((n) => <Tag key={n}>{n}</Tag>) },
-    { title: f('entity.status'), dataIndex: 'status', width: 80, valueType: 'select', valueEnum: { active: { text: f('status.active'), status: 'Success' }, inactive: { text: f('status.inactive'), status: 'Error' } }, render: (_, r) => <Tag color={statusColor[r.status]}>{f(`status.${r.status}`)}</Tag> },
-    { title: f('entity.lastLogin'), dataIndex: 'lastLoginAt', width: 170, hideInSearch: true },
-    { title: f('entity.createdAt'), dataIndex: 'createdAt', width: 170, hideInSearch: true },
     {
-      title: f('entity.action'), width: 260, hideInSearch: true, render: (_, record) => (
+      title: f('entity.email'),
+      dataIndex: 'email',
+      width: 180,
+      hideInSearch: true,
+    },
+    {
+      title: f('entity.dept'),
+      dataIndex: 'deptName',
+      width: 120,
+      hideInSearch: true,
+    },
+    {
+      title: f('entity.role'),
+      dataIndex: 'roleNames',
+      width: 160,
+      hideInSearch: true,
+      render: (_, r) => r.roleNames?.map((n) => <Tag key={n}>{n}</Tag>),
+    },
+    {
+      title: f('entity.status'),
+      dataIndex: 'status',
+      width: 80,
+      valueType: 'select',
+      valueEnum: {
+        active: { text: f('status.active'), status: 'Success' },
+        inactive: { text: f('status.inactive'), status: 'Error' },
+      },
+      render: (_, r) => (
+        <Tag color={statusColor[r.status]}>{f(`status.${r.status}`)}</Tag>
+      ),
+    },
+    {
+      title: f('entity.lastLogin'),
+      dataIndex: 'lastLoginAt',
+      width: 170,
+      hideInSearch: true,
+    },
+    {
+      title: f('entity.createdAt'),
+      dataIndex: 'createdAt',
+      width: 170,
+      hideInSearch: true,
+    },
+    {
+      title: f('entity.action'),
+      width: 260,
+      hideInSearch: true,
+      render: (_, record) => (
         <Space>
-          <Button type="link" size="small" onClick={() => { setEditRecord(record); form.setFieldsValue(record); setModalOpen(true); }}>{f('entity.edit')}</Button>
-          <Button type="link" size="small" icon={<KeyOutlined />} onClick={() => openPwdModal(record)}>{f('pages.system.user.resetPassword')}</Button>
-          <Button type="link" size="small" icon={<TeamOutlined />} onClick={() => openRoleModal(record)}>{f('pages.system.user.assignRoles')}</Button>
-          <Button type="link" size="small" danger icon={<DeleteOutlined />} onClick={async () => {
-            Modal.confirm({ title: f('pages.system.user.deleteConfirm'), onOk: async () => { await deleteUser([Number(record.id)]); message.success(f('message.deleteSuccess')); actionRef.current?.reload(); } });
-          }}>{f('entity.delete')}</Button>
+          <Button
+            type="link"
+            size="small"
+            onClick={() => {
+              setEditRecord(record);
+              form.setFieldsValue(record);
+              setModalOpen(true);
+            }}
+          >
+            {f('entity.edit')}
+          </Button>
+          <Button
+            type="link"
+            size="small"
+            icon={<KeyOutlined />}
+            onClick={() => openPwdModal(record)}
+          >
+            {f('pages.system.user.resetPassword')}
+          </Button>
+          <Button
+            type="link"
+            size="small"
+            icon={<TeamOutlined />}
+            onClick={() => openRoleModal(record)}
+          >
+            {f('pages.system.user.assignRoles')}
+          </Button>
+          <Button
+            type="link"
+            size="small"
+            danger
+            icon={<DeleteOutlined />}
+            onClick={async () => {
+              Modal.confirm({
+                title: f('pages.system.user.deleteConfirm'),
+                onOk: async () => {
+                  await deleteUser([record.idStr!]);
+                  message.success(f('message.deleteSuccess'));
+                  actionRef.current?.reload();
+                },
+              });
+            }}
+          >
+            {f('entity.delete')}
+          </Button>
         </Space>
       ),
     },
@@ -72,7 +152,7 @@ const UserList: React.FC = () => {
 
   const openRoleModal = async (user: SaaS.SysUser) => {
     setRoleUser(user);
-    setSelectedRoleIds((user.roleIds || []).map(Number));
+    setSelectedRoleIds(user.roleIds || []);
     const res = await getRoleList({ page: 1, pageSize: 9999 });
     setAllRoles(res.list || []);
     setRoleModalOpen(true);
@@ -80,7 +160,7 @@ const UserList: React.FC = () => {
 
   const handleRoleOk = async () => {
     if (!roleUser) return;
-    await assignUserRoles({ id: Number(roleUser.id), roleIds: selectedRoleIds });
+    await assignUserRoles({ id: roleUser.idStr!, roleIds: selectedRoleIds });
     message.success(f('message.assignSuccess'));
     setRoleModalOpen(false);
     actionRef.current?.reload();
@@ -94,7 +174,7 @@ const UserList: React.FC = () => {
 
   const handlePwdOk = async () => {
     if (!pwdUser || !newPassword) return;
-    await resetUserPassword({ id: Number(pwdUser.id), password: newPassword });
+    await resetUserPassword({ id: pwdUser.idStr!, password: newPassword });
     message.success(f('message.resetSuccess'));
     setPwdModalOpen(false);
   };
@@ -102,9 +182,12 @@ const UserList: React.FC = () => {
   const handleBatchDelete = async () => {
     Modal.confirm({
       title: f('pages.system.user.batchDeleteConfirm'),
-      content: f('pages.system.user.batchDeleteContent').replace('{count}', String(selectedRowKeys.length)),
+      content: f('pages.system.user.batchDeleteContent').replace(
+        '{count}',
+        String(selectedRowKeys.length),
+      ),
       onOk: async () => {
-        await deleteUser(selectedRowKeys.map(Number));
+        await deleteUser(selectedRowKeys as string[]);
         message.success(f('message.deleteSuccess'));
         setSelectedRowKeys([]);
         actionRef.current?.reload();
@@ -115,46 +198,120 @@ const UserList: React.FC = () => {
   return (
     <>
       <ProTable<SaaS.SysUser>
-        rowKey="id"
+        rowKey="idStr"
         actionRef={actionRef}
         columns={columns}
         request={async (params) => {
-          const res = await getUserList({ page: params.current || 1, pageSize: params.pageSize || 10, username: params.username, status: params.status });
+          const res = await getUserList({
+            page: params.current || 1,
+            pageSize: params.pageSize || 10,
+            username: params.username,
+            status: params.status,
+          });
           return { data: res.list, success: true, total: res.total };
         }}
         rowSelection={{ selectedRowKeys, onChange: setSelectedRowKeys }}
         toolBarRender={() => [
-          selectedRowKeys.length > 0 && <Button key="batchDelete" danger icon={<DeleteOutlined />} onClick={handleBatchDelete}>{f('pages.system.user.batchDelete')}</Button>,
-          <Button key="create" type="primary" icon={<PlusOutlined />} onClick={() => { setEditRecord(null); form.resetFields(); setModalOpen(true); }}>{f('pages.system.user.create')}</Button>,
+          selectedRowKeys.length > 0 && (
+            <Button
+              key="batchDelete"
+              danger
+              icon={<DeleteOutlined />}
+              onClick={handleBatchDelete}
+            >
+              {f('pages.system.user.batchDelete')}
+            </Button>
+          ),
+          <Button
+            key="create"
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => {
+              setEditRecord(null);
+              form.resetFields();
+              setModalOpen(true);
+            }}
+          >
+            {f('pages.system.user.create')}
+          </Button>,
         ]}
         search={{ labelWidth: 'auto' }}
-        pagination={{ pageSize: 10, showSizeChanger: true, showTotal: (total) => f('entity.totalRecords').replace('{total}', String(total)) }}
+        pagination={{
+          pageSize: 10,
+          showSizeChanger: true,
+          showTotal: (total) =>
+            f('entity.totalRecords').replace('{total}', String(total)),
+        }}
       />
       <Modal
-        title={f(editRecord ? 'pages.system.user.edit' : 'pages.system.user.create')}
+        title={f(
+          editRecord ? 'pages.system.user.edit' : 'pages.system.user.create',
+        )}
         open={modalOpen}
         onOk={async () => {
           const values = await form.validateFields();
-          if (editRecord) { await updateUser({ ...values, id: Number(editRecord.id) }); } else { await createUser(values); }
-          message.success(f('message.' + (editRecord ? 'updateSuccess' : 'createSuccess')));
-          setModalOpen(false); actionRef.current?.reload();
+          if (editRecord) {
+            await updateUser({ ...values, id: editRecord.idStr! });
+          } else {
+            await createUser(values);
+          }
+          message.success(
+            f('message.' + (editRecord ? 'updateSuccess' : 'createSuccess')),
+          );
+          setModalOpen(false);
+          actionRef.current?.reload();
         }}
         onCancel={() => setModalOpen(false)}
       >
         <Form form={form} layout="vertical">
-          <Form.Item name="username" label={f('entity.username')} rules={[{ required: true }]}><Input /></Form.Item>
-          {!editRecord && <Form.Item name="password" label={f('entity.password')} rules={[{ required: true }]}><Input.Password /></Form.Item>}
-          <Form.Item name="nickname" label={f('entity.nickname')}><Input /></Form.Item>
-          <Form.Item name="mobile" label={f('entity.mobile')}><Input /></Form.Item>
-          <Form.Item name="email" label={f('entity.email')}><Input /></Form.Item>
-          <Form.Item name="deptId" label={f('entity.dept')}><Select allowClear placeholder={f('entity.dept')} options={[]} /></Form.Item>
-          <Form.Item name="status" label={f('entity.status')} rules={[{ required: true }]} initialValue="active">
-            <Select options={[{ value: 'active', label: f('status.active') }, { value: 'inactive', label: f('status.inactive') }]} />
+          <Form.Item
+            name="username"
+            label={f('entity.username')}
+            rules={[{ required: true }]}
+          >
+            <Input />
+          </Form.Item>
+          {!editRecord && (
+            <Form.Item
+              name="password"
+              label={f('entity.password')}
+              rules={[{ required: true }]}
+            >
+              <Input.Password />
+            </Form.Item>
+          )}
+          <Form.Item name="nickname" label={f('entity.nickname')}>
+            <Input />
+          </Form.Item>
+          <Form.Item name="mobile" label={f('entity.mobile')}>
+            <Input />
+          </Form.Item>
+          <Form.Item name="email" label={f('entity.email')}>
+            <Input />
+          </Form.Item>
+          <Form.Item name="deptId" label={f('entity.dept')}>
+            <Select allowClear placeholder={f('entity.dept')} options={[]} />
+          </Form.Item>
+          <Form.Item
+            name="status"
+            label={f('entity.status')}
+            rules={[{ required: true }]}
+            initialValue="active"
+          >
+            <Select
+              options={[
+                { value: 'active', label: f('status.active') },
+                { value: 'inactive', label: f('status.inactive') },
+              ]}
+            />
           </Form.Item>
         </Form>
       </Modal>
       <Modal
-        title={f('pages.system.user.assignRoles') + (roleUser ? ` - ${roleUser.username}` : '')}
+        title={
+          f('pages.system.user.assignRoles') +
+          (roleUser ? ` - ${roleUser.username}` : '')
+        }
         open={roleModalOpen}
         onOk={handleRoleOk}
         onCancel={() => setRoleModalOpen(false)}
@@ -164,12 +321,15 @@ const UserList: React.FC = () => {
           style={{ width: '100%' }}
           value={selectedRoleIds}
           onChange={setSelectedRoleIds}
-          options={allRoles.map((r) => ({ value: Number(r.id), label: r.name }))}
+          options={allRoles.map((r) => ({ value: r.idStr!, label: r.name }))}
           placeholder={f('pages.system.user.assignRoles')}
         />
       </Modal>
       <Modal
-        title={f('pages.system.user.resetPassword') + (pwdUser ? ` - ${pwdUser.username}` : '')}
+        title={
+          f('pages.system.user.resetPassword') +
+          (pwdUser ? ` - ${pwdUser.username}` : '')
+        }
         open={pwdModalOpen}
         onOk={handlePwdOk}
         onCancel={() => setPwdModalOpen(false)}

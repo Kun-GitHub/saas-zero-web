@@ -14,7 +14,7 @@ export async function updateDept(body: SaaS.DeptUpdate) {
   });
 }
 
-export async function deleteDept(ids: number[]) {
+export async function deleteDept(ids: string[]) {
   return request<SaaS.EmptyResp>('/system/dept/delete', {
     method: 'POST',
     data: { ids },
@@ -27,7 +27,7 @@ export async function getDeptList() {
   });
 }
 
-export async function getDeptDetail(id: number) {
+export async function getDeptDetail(id: string) {
   return request<SaaS.SysDept>('/system/dept/detail', {
     method: 'GET',
     params: { id },

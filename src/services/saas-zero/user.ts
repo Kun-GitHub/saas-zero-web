@@ -14,7 +14,7 @@ export async function updateUser(body: SaaS.UserUpdate) {
   });
 }
 
-export async function deleteUser(ids: number[]) {
+export async function deleteUser(ids: string[]) {
   return request<SaaS.EmptyResp>('/system/user/delete', {
     method: 'POST',
     data: { ids },
@@ -28,7 +28,7 @@ export async function getUserList(params: SaaS.UserQuery) {
   });
 }
 
-export async function getUserDetail(id: number) {
+export async function getUserDetail(id: string) {
   return request<SaaS.SysUser>('/system/user/detail', {
     method: 'GET',
     params: { id },

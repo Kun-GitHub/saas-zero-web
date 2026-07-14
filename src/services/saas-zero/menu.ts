@@ -14,7 +14,7 @@ export async function updateMenu(body: SaaS.MenuUpdate) {
   });
 }
 
-export async function deleteMenu(ids: number[]) {
+export async function deleteMenu(ids: string[]) {
   return request<SaaS.EmptyResp>('/system/menu/delete', {
     method: 'POST',
     data: { ids },
@@ -27,7 +27,7 @@ export async function getMenuList() {
   });
 }
 
-export async function getMenuDetail(id: number) {
+export async function getMenuDetail(id: string) {
   return request<SaaS.SysMenu>('/system/menu/detail', {
     method: 'GET',
     params: { id },

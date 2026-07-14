@@ -113,6 +113,7 @@ export default {
   'entity.roleCode': '角色编码',
   'entity.status': '状态',
   'entity.sort': '排序',
+  'validation.sortRequired': '排序不能为空',
   'entity.remark': '备注',
   'entity.lastLogin': '最后登录',
   'entity.createdAt': '创建时间',

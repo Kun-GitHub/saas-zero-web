@@ -33,7 +33,8 @@ export default {
   'pages.system.user.deleteConfirm': 'Are you sure to delete this user?',
   'pages.system.user.batchDelete': 'Batch Delete',
   'pages.system.user.batchDeleteConfirm': 'Confirm Batch Delete',
-  'pages.system.user.batchDeleteContent': 'Are you sure to delete the selected {count} users?',
+  'pages.system.user.batchDeleteContent':
+    'Are you sure to delete the selected {count} users?',
   'pages.system.user.resetPassword': 'Reset Password',
   'pages.system.user.assignRoles': 'Assign Roles',
 
@@ -113,6 +114,7 @@ export default {
   'entity.roleCode': 'Role Code',
   'entity.status': 'Status',
   'entity.sort': 'Sort',
+  'validation.sortRequired': 'Sort is required',
   'entity.remark': 'Remark',
   'entity.lastLogin': 'Last Login',
   'entity.createdAt': 'Created At',

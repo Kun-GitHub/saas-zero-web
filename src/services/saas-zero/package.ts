@@ -14,7 +14,7 @@ export async function updatePackage(body: any) {
   });
 }
 
-export async function deletePackage(ids: number[]) {
+export async function deletePackage(ids: string[]) {
   return request<SaaS.EmptyResp>('/system/package/delete', {
     method: 'POST',
     data: { ids },
@@ -28,7 +28,7 @@ export async function getPackageList(params: { page: number; pageSize: number })
   });
 }
 
-export async function getPackageDetail(id: number) {
+export async function getPackageDetail(id: string) {
   return request<SaaS.SysPackage>('/system/package/detail', {
     method: 'GET',
     params: { id },
