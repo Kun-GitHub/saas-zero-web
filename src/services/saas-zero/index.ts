@@ -7,3 +7,4 @@ export * from './tenant';
 export * from './package';
 export * from './dict';
 export * from './log';
+export * from './api';

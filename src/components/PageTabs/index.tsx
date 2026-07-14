@@ -27,12 +27,21 @@ interface TabItem {
 const PageTabs: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
   const intl = useIntl();
+  const f = (id: string) => intl.formatMessage({ id });
   const tabsRef = useRef<HTMLDivElement>(null);
   const [tabs, setTabs] = useState<TabItem[]>([
-    { key: '/dashboard', label: intl.formatMessage({ id: 'menu.dashboard' }), closable: false },
+    {
+      key: '/dashboard',
+      label: intl.formatMessage({ id: 'menu.dashboard' }),
+      closable: false,
+    },
   ]);
   const [activeKey, setActiveKey] = useState('/dashboard');
-  const [ctxMenu, setCtxMenu] = useState<{ key: string; x: number; y: number } | null>(null);
+  const [ctxMenu, setCtxMenu] = useState<{
+    key: string;
+    x: number;
+    y: number;
+  } | null>(null);
 
   useEffect(() => {
     const path = location.pathname;
@@ -120,7 +129,10 @@ const PageTabs: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   if (location.pathname === '/user/login') return <>{children}</>;
 
   return (
-    <div ref={tabsRef} style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <div
+      ref={tabsRef}
+      style={{ display: 'flex', flexDirection: 'column', height: '100%' }}
+    >
       <div
         style={{
           borderBottom: '1px solid #f0f0f0',
@@ -156,7 +168,9 @@ const PageTabs: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           }))}
         />
       </div>
-      <div style={{ flex: 1, overflow: 'auto', paddingTop: 24 }}>{children}</div>
+      <div style={{ flex: 1, overflow: 'auto', paddingTop: 24 }}>
+        {children}
+      </div>
       {ctxMenu &&
         createPortal(
           <div
@@ -179,11 +193,11 @@ const PageTabs: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 else if (key === 'closeCurrent') closeTab(ctxMenu.key);
               }}
               items={[
-                { key: 'closeOthers', label: '关闭其他标签' },
-                { key: 'closeRight', label: '关闭右侧标签' },
-                { key: 'closeAll', label: '关闭全部标签' },
+                { key: 'closeOthers', label: f('app.tabs.closeOthers') },
+                { key: 'closeRight', label: f('app.tabs.closeRight') },
+                { key: 'closeAll', label: f('app.tabs.closeAll') },
                 { type: 'divider' },
-                { key: 'closeCurrent', label: '关闭当前标签' },
+                { key: 'closeCurrent', label: f('app.tabs.closeCurrent') },
               ]}
               style={{ border: 'none' }}
             />

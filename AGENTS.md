@@ -190,19 +190,39 @@ export async function getCaptcha() {
 
 ### ProLayout 运行时配置（`app.tsx:layout`）
 - `onPageChange`: 未登录时（无 currentUser）自动跳转到 `/user/login`
-- `rightContentRender`: 渲染用户头像+角色
+- `rightContentRender`: 用户头像下拉菜单（个人中心 / 修改密码 / 退出登录）
 - `actionsRender`: 语言切换按钮
-- `childrenRender`: 开发模式下附加 SettingDrawer
+- `childrenRender`: PageTabs 多标签页 + 开发模式 SettingDrawer
+
+### 修改密码
+
+用户头像下拉菜单中的「修改密码」选项会弹出 Modal，包含：
+- 当前密码
+- 新密码（最少 6 位）
+- 确认新密码（前端校验一致性）
+
+调用 `POST /oauth/password/change`（`auth.ts:changePassword`）。
 
 ## 授权模型（`access.ts`）
 
-基于 `initialState.currentUser` 的 `roleCodes` 和 `permissions`：
+基于 `initialState.currentUser` 的 `roleCodes` 和 `permissions`。`getInitialState` 中会同时调用 `/oauth/permissions` 获取当前用户的权限标识列表。
 
 | 方法 | 逻辑 | 用途 |
 |---|---|---|
 | `isAdmin` | `roleCodes.includes('admin')` | 管理员专属功能 |
 | `canAdmin` | `admin` 或 `manager` | 管理后台操作 |
 | `routeFilter` | `hasPermission('menu:xxx')` 或 `isAdmin` | 菜单/路由过滤 |
+| `canManageUsers` | `isAdmin` 或 `hasPermission('system:user:manage')` | 用户管理页面 |
+| `canManageRoles` | `isAdmin` 或 `hasPermission('system:role:manage')` | 角色管理页面 |
+| `canManageMenus` | `isAdmin` 或 `hasPermission('system:menu:manage')` | 菜单管理页面 |
+| `canManageDepts` | `isAdmin` 或 `hasPermission('system:dept:manage')` | 部门管理页面 |
+| `canManageTenants` | `isAdmin` 或 `hasPermission('system:tenant:manage')` | 租户管理页面 |
+| `canManagePackages` | `isAdmin` 或 `hasPermission('system:package:manage')` | 套餐管理页面 |
+| `canManageApis` | `isAdmin` 或 `hasPermission('system:api:manage')` | API管理页面 |
+| `canManageDicts` | `isAdmin` 或 `hasPermission('system:dict:manage')` | 字典管理页面 |
+| `canViewLogs` | `isAdmin` 或 `hasPermission('system:log:view')` | 日志查看页面 |
+
+路由级权限控制通过 `config/routes.ts` 的 `access` 属性接入，Umi 自动根据 `access.ts` 返回值决定菜单可见性和路由拦截。
 
 ## 国际化
 
@@ -284,35 +304,31 @@ npm run build       # 生产构建
 | 页面 | 状态 | 核心功能 |
 |---|---|---|
 | 登录 | ✅ | 双栏布局 + 验证码 + JWT 登录 |
-| 控制台 | ✅ | 占位 |
-| 用户管理 | ✅ | CRUD ProTable + 批量删除 + 重置密码 + 分配角色 |
+| 控制台 | ✅ | 真实数据统计卡片（用户/租户/角色/登录数） + 最近操作日志 + 系统状态 |
+| 用户管理 | ✅ | CRUD ProTable + 批量删除 + 重置密码 + 分配角色 + TreeSelect 部门选择 |
 | 角色管理 | ✅ | CRUD ProTable + 分配菜单 Tree + 分配 API 复选框 |
 | 菜单管理 | ✅ | TreeTable CRUD |
 | 部门管理 | ✅ | TreeTable CRUD |
-| 字典管理 | ✅ | 左右双栏布局 + 字典/字典数据 CRUD |
+| 字典管理 | ✅ | 左右双栏布局 + 字典 CRUD（含编辑/删除） + 字典数据 CRUD |
 | 租户管理 | ✅ | ProTable CRUD + 状态切换 |
 | 套餐管理 | ✅ | 卡片布局 CRUD |
 | API管理 | ✅ | ProTable CRUD + 按类型/方法筛选 |
 | 登录日志 | ✅ | ProTable 只读查询 |
 | 操作日志 | ✅ | ProTable 只读查询 |
-| 系统初始化 | ✅ | Steps 向导 + `/init/*` 分步/全量初始化 |
-
-## 已知预存 TypeScript 错误
-
-所有错误统一由 `useRef<ActionType>()` 引起（React 19 不再允许无初始值调用 `useRef`），只需补 `null`：
-
-```tsx
-const actionRef = useRef<ActionType>(null);  // ✅
-const actionRef = useRef<ActionType>();       // ❌ 10 处
-```
-
-不影响运行，仅在 `npm run tsc` 时报告。
+| 系统初始化 | ✅ | Steps 向导 + `/init/*` 全量初始化 |
+| 修改密码 | ✅ | 头像下拉菜单弹窗 |
+| 权限控制 | ✅ | access.ts + routes access 属性 + permissions API |
+| 多标签页 | ✅ | PageTabs + 右键菜单（关闭其他/右侧/全部/当前） |
+| 国际化 | ✅ | 所有文本走 i18n（zh-CN + en-US），无硬编码中文 |
 
 ## 开发要点
 
 - 所有文本走国际化（`formatMessage`），后端只返回 code，前端翻译
 - 所有 ID 使用 `string` 类型（防止前端 int64 精度丢失）
+- `useRef<ActionType>(null)` —— React 19 要求必须传 `null` 初始值
 - delete 接口统一 `POST` + `{ ids }`
-- 新增页面需同步注册路由（`routes.ts`）+ 翻译键（`locales/zh-CN/pages.ts`）+ translation
-- ProLayout 菜单目前硬编码在 `routes.ts`，将来切换到 `/oauth/menus` 动态加载
-- 响应 interceptor 在 `app.tsx` 中全局拆包，新增服务函数无需重复拆包（`getCaptcha` 除外）
+- 新增页面需同步注册路由（`routes.ts`，含 `access` 属性）+ 翻译键（`locales/zh-CN/pages.ts` + `en-US/pages.ts`）
+- 新增路由需在 `access.ts` 中添加对应权限判断
+- ProLayout 菜单已通过 `/oauth/menus` 动态加载（`app.tsx:getInitialState` 中调用）
+- 响应 interceptor 在 `app.tsx` 中全局拆包（`code===200` 时取 `body.data`），新增服务函数无需重复拆包
+- 翻译键约定：`pages.*` 页面文本，`entity.*` 实体字段，`status.*` 状态值，`message.*` 操作提示，`app.*` 全局应用文本，`menu.*` 菜单名称

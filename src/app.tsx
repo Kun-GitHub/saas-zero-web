@@ -1,14 +1,20 @@
 import * as Icons from '@ant-design/icons';
+import { KeyOutlined, LogoutOutlined, UserOutlined } from '@ant-design/icons';
 import type { Settings as LayoutSettings } from '@ant-design/pro-components';
 import { SettingDrawer } from '@ant-design/pro-components';
 import type { RequestConfig, RunTimeLayoutConfig } from '@umijs/max';
-import { history } from '@umijs/max';
-import { App, Dropdown } from 'antd';
+import { history, useIntl } from '@umijs/max';
+import { App, Dropdown, Form, Input, Modal } from 'antd';
 import { createStyles } from 'antd-style';
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { SelectLang } from '@/components';
 import PageTabs from '@/components/PageTabs';
-import { getCurrentUser, getMenus } from '@/services/saas-zero/auth';
+import {
+  changePassword,
+  getCurrentUser,
+  getMenus,
+  getPermissions,
+} from '@/services/saas-zero/auth';
 import defaultSettings from '../config/defaultSettings';
 
 const isDev = process.env.NODE_ENV === 'development' || process.env.CI;
@@ -57,6 +63,15 @@ export async function getInitialState(): Promise<{
   const fetchUserInfo = async () => {
     try {
       const user = await getCurrentUser();
+      // Fetch permissions and merge into currentUser
+      try {
+        const perms = await getPermissions();
+        if (perms) {
+          user.permissions = perms;
+        }
+      } catch {
+        // permissions fetch failed, continue with empty permissions
+      }
       return user;
     } catch (e: any) {
       if (e?.code === 1004) {
@@ -71,9 +86,10 @@ export async function getInitialState(): Promise<{
       fetchUserInfo(),
       getMenus().catch(() => undefined),
     ]);
-    const menuData = apiMenus && apiMenus.length > 0
-      ? apiMenus.map((m: any) => apiMenuToLayout(m))
-      : undefined;
+    const menuData =
+      apiMenus && apiMenus.length > 0
+        ? apiMenus.map((m: any) => apiMenuToLayout(m))
+        : undefined;
     return {
       fetchUserInfo,
       currentUser,
@@ -98,61 +114,155 @@ const apiMenuToLayout = (m: any): any => {
     path,
     icon: m.icon ? resolveIcon(m.icon) : undefined,
     hideInMenu: m.hidden || false,
-    children: m.children?.length ? m.children.map((c: any) => apiMenuToLayout(c)) : undefined,
+    children: m.children?.length
+      ? m.children.map((c: any) => apiMenuToLayout(c))
+      : undefined,
   };
 };
 
 const iconCache = new Map<string, React.ReactNode>();
 const resolveIcon = (name: string): React.ReactNode => {
   if (iconCache.has(name)) return iconCache.get(name);
-  let Comp = (Icons as any)[name + 'Outlined'] || (Icons as any)[name];
-  if (!Comp) { iconCache.set(name, null); return null; }
+  const Comp = (Icons as any)[name + 'Outlined'] || (Icons as any)[name];
+  if (!Comp) {
+    iconCache.set(name, null);
+    return null;
+  }
   const node = <Comp />;
   iconCache.set(name, node);
   return node;
 };
 
-const AvatarContent: React.FC<{ currentUser?: SaaS.CurrentUser }> = ({ currentUser }) => {
+const AvatarContent: React.FC<{ currentUser?: SaaS.CurrentUser }> = ({
+  currentUser,
+}) => {
   const { styles } = useStyles();
   const { message } = App.useApp();
+  const intl = useIntl();
+  const f = (id: string) => intl.formatMessage({ id });
+
+  const [pwdModalOpen, setPwdModalOpen] = useState(false);
+  const [pwdForm] = Form.useForm();
+  const [pwdLoading, setPwdLoading] = useState(false);
 
   const onLogout = useCallback(() => {
     sessionStorage.removeItem('saas-zero-token');
-    message.success('已退出登录');
+    message.success(f('app.logout.success'));
     history.push(loginPath);
-  }, [message]);
+  }, [message, f]);
+
+  const handleChangePassword = async () => {
+    try {
+      const values = await pwdForm.validateFields();
+      if (values.newPassword !== values.confirmPassword) {
+        message.error(f('app.password.mismatch'));
+        return;
+      }
+      setPwdLoading(true);
+      await changePassword({
+        oldPassword: values.oldPassword,
+        newPassword: values.newPassword,
+      });
+      message.success(f('app.password.success'));
+      setPwdModalOpen(false);
+      pwdForm.resetFields();
+    } catch (e: any) {
+      if (e?.message) message.error(e.message);
+    } finally {
+      setPwdLoading(false);
+    }
+  };
 
   if (!currentUser) return null;
 
   return (
-    <Dropdown
-      menu={{
-        items: [
-          {
-            key: 'logout',
-            icon: <LogoutOutlined />,
-            label: '退出登录',
-            onClick: onLogout,
-          },
-        ],
-      }}
-    >
-      <div className={styles.userContainer}>
-        <div className={styles.userAvatar}>
-          <UserOutlined />
-        </div>
-        <div className={styles.userInfo}>
-          <div className={styles.userName}>{currentUser.nickname || currentUser.userName}</div>
-          <div className={styles.userRole}>
-            {(currentUser as any).roleNames?.join(', ') || '超级管理员'}
+    <>
+      <Dropdown
+        menu={{
+          items: [
+            {
+              key: 'profile',
+              icon: <UserOutlined />,
+              label: f('app.profile'),
+              disabled: true,
+            },
+            {
+              key: 'changePassword',
+              icon: <KeyOutlined />,
+              label: f('app.changePassword'),
+              onClick: () => {
+                pwdForm.resetFields();
+                setPwdModalOpen(true);
+              },
+            },
+            { type: 'divider' },
+            {
+              key: 'logout',
+              icon: <LogoutOutlined />,
+              label: f('app.logout'),
+              onClick: onLogout,
+            },
+          ],
+        }}
+      >
+        <div className={styles.userContainer}>
+          <div className={styles.userAvatar}>
+            <UserOutlined />
+          </div>
+          <div className={styles.userInfo}>
+            <div className={styles.userName}>
+              {currentUser.nickname || currentUser.userName}
+            </div>
+            <div className={styles.userRole}>
+              {currentUser.roleCodes?.join(', ') || f('app.defaultRole')}
+            </div>
           </div>
         </div>
-      </div>
-    </Dropdown>
+      </Dropdown>
+      <Modal
+        title={f('app.changePassword')}
+        open={pwdModalOpen}
+        onOk={handleChangePassword}
+        onCancel={() => setPwdModalOpen(false)}
+        confirmLoading={pwdLoading}
+      >
+        <Form form={pwdForm} layout="vertical">
+          <Form.Item
+            name="oldPassword"
+            label={f('app.password.old')}
+            rules={[{ required: true, message: f('app.password.oldRequired') }]}
+          >
+            <Input.Password />
+          </Form.Item>
+          <Form.Item
+            name="newPassword"
+            label={f('app.password.new')}
+            rules={[
+              { required: true, message: f('app.password.newRequired') },
+              { min: 6, message: f('app.password.minLength') },
+            ]}
+          >
+            <Input.Password />
+          </Form.Item>
+          <Form.Item
+            name="confirmPassword"
+            label={f('entity.confirmPassword')}
+            rules={[
+              { required: true, message: f('app.password.confirmRequired') },
+            ]}
+          >
+            <Input.Password />
+          </Form.Item>
+        </Form>
+      </Modal>
+    </>
   );
 };
 
-export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) => {
+export const layout: RunTimeLayoutConfig = ({
+  initialState,
+  setInitialState,
+}) => {
   return {
     actionsRender: () => [<SelectLang key="SelectLang" />],
     avatarProps: false as any,
@@ -162,7 +272,11 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
     footerRender: false,
     onPageChange: () => {
       const { location } = history;
-      if (!initialState?.currentUser && location.pathname !== loginPath && !location.pathname.startsWith('/init')) {
+      if (
+        !initialState?.currentUser &&
+        location.pathname !== loginPath &&
+        !location.pathname.startsWith('/init')
+      ) {
         history.push(loginPath);
       }
     },
@@ -171,7 +285,9 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
       : undefined,
     links: [],
     menuHeaderRender: undefined,
-    rightContentRender: () => <AvatarContent currentUser={initialState?.currentUser} />,
+    rightContentRender: () => (
+      <AvatarContent currentUser={initialState?.currentUser} />
+    ),
     childrenRender: (children) => {
       return (
         <PageTabs>
@@ -204,7 +320,10 @@ export const request: RequestConfig = {
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
-      console.log(`[API] → ${config.method?.toUpperCase()} ${config.url}`, config.params || config.data || '');
+      console.log(
+        `[API] → ${config.method?.toUpperCase()} ${config.url}`,
+        config.params || config.data || '',
+      );
       return config;
     },
   ],
@@ -218,7 +337,9 @@ export const request: RequestConfig = {
           if (body.code === 1004 || body.code === 401) {
             console.log('[API] token expired, logging out');
             sessionStorage.removeItem('saas-zero-token');
-            setTimeout(() => { window.location.href = loginPath; }, 100);
+            setTimeout(() => {
+              window.location.href = loginPath;
+            }, 100);
           }
           const err: any = new Error(body.msg || 'Request failed');
           err.code = body.code;
@@ -232,11 +353,18 @@ export const request: RequestConfig = {
   ],
   errorConfig: {
     errorHandler: (error: any) => {
-      console.log('[API] ✗', error.code || error.response?.status, error.message);
-      const code = error.code || error.response?.data?.code || error.response?.status;
+      console.log(
+        '[API] ✗',
+        error.code || error.response?.status,
+        error.message,
+      );
+      const code =
+        error.code || error.response?.data?.code || error.response?.status;
       if (code === 401 || code === 1004) {
         sessionStorage.removeItem('saas-zero-token');
-        setTimeout(() => { window.location.href = loginPath; }, 100);
+        setTimeout(() => {
+          window.location.href = loginPath;
+        }, 100);
         return;
       }
     },

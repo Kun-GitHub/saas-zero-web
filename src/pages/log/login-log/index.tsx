@@ -7,22 +7,52 @@ import { getLoginLogList } from '@/services/saas-zero/log';
 
 const LoginLogList: React.FC = () => {
   const intl = useIntl();
-  const actionRef = useRef<ActionType>();
+  const actionRef = useRef<ActionType>(null);
   const f = (id: string) => intl.formatMessage({ id });
 
   const columns: ProColumns<any>[] = [
     { title: f('entity.username'), dataIndex: 'username', width: 120 },
-    { title: f('entity.log.ip'), dataIndex: 'loginIp', width: 140, hideInSearch: true },
-    { title: f('entity.status'), dataIndex: 'status', width: 80, render: (_, r) => <Tag color={r.status === 'success' ? 'green' : 'red'}>{f(`status.${r.status}`)}</Tag> },
-    { title: f('entity.log.message'), dataIndex: 'msg', width: 200, hideInSearch: true },
-    { title: f('entity.log.time'), dataIndex: 'loginAt', width: 170, hideInSearch: true },
+    {
+      title: f('entity.log.ip'),
+      dataIndex: 'loginIp',
+      width: 140,
+      hideInSearch: true,
+    },
+    {
+      title: f('entity.status'),
+      dataIndex: 'status',
+      width: 80,
+      render: (_, r) => (
+        <Tag color={r.status === 'success' ? 'green' : 'red'}>
+          {f(`status.${r.status}`)}
+        </Tag>
+      ),
+    },
+    {
+      title: f('entity.log.message'),
+      dataIndex: 'msg',
+      width: 200,
+      hideInSearch: true,
+    },
+    {
+      title: f('entity.log.time'),
+      dataIndex: 'loginAt',
+      width: 170,
+      hideInSearch: true,
+    },
   ];
 
   return (
     <ProTable
-      rowKey="id" actionRef={actionRef} columns={columns}
+      rowKey="id"
+      actionRef={actionRef}
+      columns={columns}
       request={async (params) => {
-        const res = await getLoginLogList({ page: params.current || 1, pageSize: params.pageSize || 10, username: params.username });
+        const res = await getLoginLogList({
+          page: params.current || 1,
+          pageSize: params.pageSize || 10,
+          username: params.username,
+        });
         return { data: res.list, success: true, total: res.total };
       }}
       search={{ labelWidth: 'auto' }}

@@ -329,8 +329,10 @@ const RoleList: React.FC = () => {
                   }
                 }}
               >
-                <Tag color="blue">{api.method}</Tag> {api.path}
-                <span style={{ marginLeft: 8, color: '#999' }}>{api.name}</span>
+                <Tag color="blue">{api.apiMethod}</Tag> {api.apiPath}
+                <span style={{ marginLeft: 8, color: '#999' }}>
+                  {api.apiName}
+                </span>
               </Checkbox>
             </div>
           ))}

@@ -20,12 +20,13 @@ const InitPage: React.FC = () => {
     setLoading(true);
     try {
       // 调用 /init/all 一次性创建所有初始数据 + Casbin 策略
-      const resp: any = await request('/init/all', { method: 'POST' });
-      if (resp && resp.code !== 0) throw new Error(resp.msg || 'fail');
+      await request('/init/all', { method: 'POST' });
       setCurrent(3);
       message.success(f('pages.init.success'));
     } catch (e: any) {
-      message.error(e?.message || f('pages.init.stepFailed').replace('{step}', '1'));
+      message.error(
+        e?.message || f('pages.init.stepFailed').replace('{step}', '1'),
+      );
     }
     setLoading(false);
   };
@@ -34,7 +35,9 @@ const InitPage: React.FC = () => {
     <Card title={f('pages.init.title')}>
       <Steps current={current} items={steps} style={{ marginBottom: 32 }} />
       <Space>
-        <Button type="primary" size="large" loading={loading} onClick={runInit}>{f('pages.init.runAll')}</Button>
+        <Button type="primary" size="large" loading={loading} onClick={runInit}>
+          {f('pages.init.runAll')}
+        </Button>
       </Space>
     </Card>
   );

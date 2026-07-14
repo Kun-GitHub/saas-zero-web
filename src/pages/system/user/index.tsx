@@ -7,8 +7,19 @@ import {
 import type { ActionType, ProColumns } from '@ant-design/pro-components';
 import { ProTable } from '@ant-design/pro-components';
 import { useIntl } from '@umijs/max';
-import { App, Button, Form, Input, Modal, Select, Space, Tag } from 'antd';
+import {
+  App,
+  Button,
+  Form,
+  Input,
+  Modal,
+  Select,
+  Space,
+  Tag,
+  TreeSelect,
+} from 'antd';
 import React, { useRef, useState } from 'react';
+import { getDeptTree } from '@/services/saas-zero/dept';
 import { getRoleList } from '@/services/saas-zero/role';
 import {
   assignUserRoles,
@@ -43,6 +54,17 @@ const UserList: React.FC = () => {
   const [pwdModalOpen, setPwdModalOpen] = useState(false);
   const [pwdUser, setPwdUser] = useState<SaaS.SysUser | null>(null);
   const [newPassword, setNewPassword] = useState('');
+
+  const [deptTree, setDeptTree] = useState<any[]>([]);
+
+  const loadDeptTree = async () => {
+    try {
+      const data = await getDeptTree();
+      setDeptTree(data || []);
+    } catch {
+      setDeptTree([]);
+    }
+  };
 
   const f = (id: string) => intl.formatMessage({ id });
 
@@ -106,6 +128,7 @@ const UserList: React.FC = () => {
             onClick={() => {
               setEditRecord(record);
               form.setFieldsValue(record);
+              loadDeptTree();
               setModalOpen(true);
             }}
           >
@@ -229,6 +252,7 @@ const UserList: React.FC = () => {
             onClick={() => {
               setEditRecord(null);
               form.resetFields();
+              loadDeptTree();
               setModalOpen(true);
             }}
           >
@@ -290,7 +314,17 @@ const UserList: React.FC = () => {
             <Input />
           </Form.Item>
           <Form.Item name="deptId" label={f('entity.dept')}>
-            <Select allowClear placeholder={f('entity.dept')} options={[]} />
+            <TreeSelect
+              allowClear
+              placeholder={f('entity.dept')}
+              treeData={deptTree}
+              fieldNames={{
+                label: 'name',
+                value: 'idStr',
+                children: 'children',
+              }}
+              treeDefaultExpandAll
+            />
           </Form.Item>
           <Form.Item
             name="status"
