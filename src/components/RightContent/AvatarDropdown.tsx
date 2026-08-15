@@ -44,13 +44,12 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({
 }) => {
   const loginOut = async () => {
     sessionStorage.removeItem('saas-zero-token');
-    const { search, pathname } = window.location;
-    const urlParams = new URL(window.location.href).searchParams;
+    const { pathname, search } = history.location;
     const searchParams = new URLSearchParams({
       redirect: pathname + search,
     });
-    const redirect = urlParams.get('redirect');
-    if (window.location.pathname !== '/user/login' && !redirect) {
+    const redirect = (history.location as any).query?.redirect;
+    if (pathname !== '/user/login' && !redirect) {
       history.replace({
         pathname: '/user/login',
         search: searchParams.toString(),

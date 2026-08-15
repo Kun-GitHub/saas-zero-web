@@ -54,6 +54,9 @@ export default {
   'pages.system.menu.edit': 'Edit Menu',
   'pages.system.menu.delete': 'Delete Menu',
   'pages.system.menu.deleteConfirm': 'Are you sure to delete this menu?',
+  'pages.system.menu.addChild': 'Add Child',
+  'pages.system.menu.selectIcon': 'Select Icon',
+  'pages.system.menu.searchIcon': 'Search icons (Outlined / Filled / TwoTone)',
 
   'pages.system.dept.title': 'Department Management',
   'pages.system.dept.create': 'Create Department',
@@ -167,6 +170,7 @@ export default {
   'entity.menu.name': 'Menu Name',
   'entity.menu.type': 'Menu Type',
   'entity.menu.path': 'Path',
+  'entity.menu.permission': 'Permission Code',
   'entity.menu.icon': 'Icon',
   'entity.menu.parent': 'Parent Menu',
   'entity.menu.directory': 'Directory',

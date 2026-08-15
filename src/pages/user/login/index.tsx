@@ -6,12 +6,12 @@ import {
   UserOutlined,
 } from '@ant-design/icons';
 import { LoginForm, ProFormCheckbox, ProFormText } from '@ant-design/pro-components';
-import { Helmet, SelectLang, useIntl, useModel } from '@umijs/max';
+import { Helmet, SelectLang, history, useIntl, useModel } from '@umijs/max';
 import { App } from 'antd';
 import { createStyles } from 'antd-style';
 import React, { useEffect, useState } from 'react';
 import { flushSync } from 'react-dom';
-import { getCaptcha, login } from '@/services/saas-zero/auth';
+import { getCaptcha, getCurrentUser, getPermissions, login } from '@/services/saas-zero/auth';
 import Settings from '../../../../config/defaultSettings';
 
 const useStyles = createStyles(({ token }) => ({
@@ -194,15 +194,25 @@ const Login: React.FC = () => {
         captchaVal: values.captcha,
       });
       sessionStorage.setItem('saas-zero-token', result.token);
-      const userInfo = await result.user;
+      const userInfo = await getCurrentUser();
+      try {
+        const perms = await getPermissions();
+        if (perms) {
+          userInfo.permissions = perms;
+        }
+      } catch {
+        // permissions fetch failed, continue with empty permissions
+      }
       flushSync(() => {
         setInitialState((s: any) => ({
           ...s,
           currentUser: userInfo,
         }));
       });
-      const urlParams = new URL(window.location.href).searchParams;
-      window.location.href = urlParams.get('redirect') || '/';
+      const redirect = new URLSearchParams(history.location.search).get(
+        'redirect',
+      );
+      history.push(redirect || '/');
     } catch (e: any) {
       message.error(e?.message || f('pages.login.failure'));
       loadCaptcha();

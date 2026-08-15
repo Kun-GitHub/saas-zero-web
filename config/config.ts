@@ -42,6 +42,13 @@ export default defineConfig({
   // umi routes: https://umijs.org/docs/routing
   routes,
   /**
+   * @name 路由模式
+   * @description 使用 hash 模式，刷新任意页面都不会 404（无需服务器 fallback 配置）
+   */
+  history: {
+    type: 'hash',
+  },
+  /**
    * @name 主题的配置
    * @description 虽然叫主题，但是其实只是 less 的变量设置
    * @doc antd的主题设置 https://ant.design/docs/react/customize-theme-cn

@@ -1,4 +1,8 @@
-import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
+import {
+  DeleteOutlined,
+  PlusOutlined,
+  PlusSquareOutlined,
+} from '@ant-design/icons';
 import type { ActionType, ProColumns } from '@ant-design/pro-components';
 import { ProTable } from '@ant-design/pro-components';
 import { useIntl } from '@umijs/max';
@@ -21,12 +25,25 @@ import {
   updateMenu,
 } from '@/services/saas-zero/menu';
 import { formatDateTime } from '@/utils/datetime';
+import IconPicker from '@/components/IconPicker';
 
 const typeColor: Record<string, string> = {
   directory: 'blue',
   menu: 'green',
   button: 'orange',
 };
+
+// 移除空 children，避免叶子节点误显示展开按钮
+const cleanTree = (items: any[]): any[] =>
+  items.map((item) => {
+    const copy = { ...item };
+    if (copy.children?.length) {
+      copy.children = cleanTree(copy.children);
+    } else {
+      delete copy.children;
+    }
+    return copy;
+  });
 
 const flattenTree = (
   items: any[],
@@ -54,13 +71,14 @@ const MenuList: React.FC = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [editRecord, setEditRecord] = useState<any>(null);
   const [form] = Form.useForm();
+  const menuType = Form.useWatch('menuType', form);
   const [parentOptions, setParentOptions] = useState<
     { id: string; name: string }[]
   >([]);
 
   const f = (id: string) => intl.formatMessage({ id });
 
-  const openCreateModal = async () => {
+  const openCreateModal = async (parent?: any) => {
     setEditRecord(null);
     form.resetFields();
     try {
@@ -69,12 +87,19 @@ const MenuList: React.FC = () => {
     } catch {
       setParentOptions([]);
     }
+    if (parent) {
+      form.setFieldsValue({ parentId: parent.idStr });
+    }
     setModalOpen(true);
   };
 
   const openEditModal = async (record: any) => {
     setEditRecord(record);
-    form.setFieldsValue(record);
+    // parentId 需用字符串 idStr 回显，才能匹配上级菜单选项
+    form.setFieldsValue({
+      ...record,
+      parentId: record.parentIdStr || undefined,
+    });
     try {
       const res = await getMenuTree();
       setParentOptions(flattenTree(res));
@@ -101,6 +126,12 @@ const MenuList: React.FC = () => {
       dataIndex: 'path',
       width: 200,
       hideInSearch: true,
+      render: (_, r) =>
+        r.menuType === 'button' ? (
+          <Tag color="purple">{r.path}</Tag>
+        ) : (
+          r.path
+        ),
     },
     {
       title: f('entity.menu.icon'),
@@ -139,10 +170,20 @@ const MenuList: React.FC = () => {
     },
     {
       title: f('entity.action'),
-      width: 140,
+      width: 200,
       hideInSearch: true,
       render: (_, r) => (
         <Space>
+          {(r.menuType === 'directory' || r.menuType === 'menu') && (
+            <Button
+              type="link"
+              size="small"
+              icon={<PlusSquareOutlined />}
+              onClick={() => openCreateModal(r)}
+            >
+              {f('pages.system.menu.addChild')}
+            </Button>
+          )}
           <Button type="link" size="small" onClick={() => openEditModal(r)}>
             {f('entity.edit')}
           </Button>
@@ -177,7 +218,8 @@ const MenuList: React.FC = () => {
         columns={columns}
         request={async () => {
           const res = await getMenuTree();
-          return { data: res, success: true, total: res.length };
+          const tree = cleanTree(res);
+          return { data: tree, success: true, total: tree.length };
         }}
         toolBarRender={() => [
           <Button
@@ -243,12 +285,21 @@ const MenuList: React.FC = () => {
               }))}
             />
           </Form.Item>
-          <Form.Item name="path" label={f('entity.menu.path')}>
+          <Form.Item
+            name="path"
+            label={
+              menuType === 'button'
+                ? f('entity.menu.permission')
+                : f('entity.menu.path')
+            }
+          >
             <Input />
           </Form.Item>
-          <Form.Item name="icon" label={f('entity.menu.icon')}>
-            <Input />
-          </Form.Item>
+          {menuType !== 'button' && (
+            <Form.Item name="icon" label={f('entity.menu.icon')}>
+              <IconPicker />
+            </Form.Item>
+          )}
           <Form.Item
             name="sort"
             label={f('entity.sort')}

@@ -4,7 +4,7 @@ import type { Settings as LayoutSettings } from '@ant-design/pro-components';
 import { SettingDrawer } from '@ant-design/pro-components';
 import type { RequestConfig, RunTimeLayoutConfig } from '@umijs/max';
 import { history, useIntl } from '@umijs/max';
-import { Dropdown } from 'antd';
+import { Dropdown, message as antdMessage } from 'antd';
 import React from 'react';
 import { SelectLang } from '@/components';
 import PageTabs from '@/components/PageTabs';
@@ -53,7 +53,9 @@ export async function getInitialState(): Promise<{
     ]);
     const baseMenuData =
       apiMenus && apiMenus.length > 0
-        ? apiMenus.map((m: any) => apiMenuToLayout(m))
+        ? apiMenus
+            .filter((m: any) => m.menuType !== 'button')
+            .map((m: any) => apiMenuToLayout(m))
         : [];
     const menuData = [
       ...baseMenuData,
@@ -82,15 +84,16 @@ const apiMenuToLayout = (m: any): any => {
   // path would all collapse to `undefined`, making sibling directories expand,
   // collapse and highlight together. Guarantee a unique, stable path per node.
   const path = m.path || `/__menu_${m.id}`;
+  const children = (m.children?.length ? m.children : [])
+    .filter((c: any) => c.menuType !== 'button')
+    .map((c: any) => apiMenuToLayout(c));
   return {
     key: path,
     name: m.name,
     path,
     icon: m.icon ? resolveIcon(m.icon) : undefined,
     hideInMenu: m.hidden || false,
-    children: m.children?.length
-      ? m.children.map((c: any) => apiMenuToLayout(c))
-      : undefined,
+    children: children.length ? children : undefined,
   };
 };
 
@@ -230,7 +233,7 @@ export const request: RequestConfig = {
             console.log('[API] token expired, logging out');
             sessionStorage.removeItem('saas-zero-token');
             setTimeout(() => {
-              window.location.href = loginPath;
+              window.location.hash = '#' + loginPath;
             }, 100);
           }
           const err: any = new Error(body.msg || 'Request failed');
@@ -255,10 +258,11 @@ export const request: RequestConfig = {
       if (code === 401 || code === 1004) {
         sessionStorage.removeItem('saas-zero-token');
         setTimeout(() => {
-          window.location.href = loginPath;
+          window.location.hash = '#' + loginPath;
         }, 100);
         return;
       }
+      antdMessage.error(error.message || 'Request failed');
     },
   },
 };

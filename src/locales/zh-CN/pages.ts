@@ -53,6 +53,9 @@ export default {
   'pages.system.menu.edit': '编辑菜单',
   'pages.system.menu.delete': '删除菜单',
   'pages.system.menu.deleteConfirm': '确定要删除该菜单吗？',
+  'pages.system.menu.addChild': '添加下级',
+  'pages.system.menu.selectIcon': '选择图标',
+  'pages.system.menu.searchIcon': '搜索图标（Outlined / Filled / TwoTone）',
 
   'pages.system.dept.title': '部门管理',
   'pages.system.dept.create': '新增部门',
@@ -166,6 +169,7 @@ export default {
   'entity.menu.name': '菜单名称',
   'entity.menu.type': '菜单类型',
   'entity.menu.path': '路径',
+  'entity.menu.permission': '权限标识',
   'entity.menu.icon': '图标',
   'entity.menu.parent': '上级菜单',
   'entity.menu.directory': '目录',
