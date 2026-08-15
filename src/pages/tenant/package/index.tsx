@@ -24,7 +24,7 @@ import { formatDateTime } from '@/utils/datetime';
 
 const PackageList: React.FC = () => {
   const intl = useIntl();
-  const { message } = App.useApp();
+  const { message, modal } = App.useApp();
   const f = (id: string) => intl.formatMessage({ id });
   const [packages, setPackages] = useState<SaaS.SysPackage[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
@@ -103,7 +103,7 @@ const PackageList: React.FC = () => {
                   danger
                   icon={<DeleteOutlined />}
                   onClick={() =>
-                    Modal.confirm({
+                    modal.confirm({
                       title: f('pages.tenant.package.deleteConfirm'),
                       onOk: async () => {
                         await deletePackage([pkg.idStr!]);

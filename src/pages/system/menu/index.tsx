@@ -18,6 +18,7 @@ import {
   Tag,
 } from 'antd';
 import React, { useRef, useState } from 'react';
+import IconPicker from '@/components/IconPicker';
 import {
   createMenu,
   deleteMenu,
@@ -25,7 +26,6 @@ import {
   updateMenu,
 } from '@/services/saas-zero/menu';
 import { formatDateTime } from '@/utils/datetime';
-import IconPicker from '@/components/IconPicker';
 
 const typeColor: Record<string, string> = {
   directory: 'blue',
@@ -67,7 +67,7 @@ const flattenTree = (
 const MenuList: React.FC = () => {
   const intl = useIntl();
   const actionRef = useRef<ActionType>(null);
-  const { message } = App.useApp();
+  const { message, modal } = App.useApp();
   const [modalOpen, setModalOpen] = useState(false);
   const [editRecord, setEditRecord] = useState<any>(null);
   const [form] = Form.useForm();
@@ -127,11 +127,7 @@ const MenuList: React.FC = () => {
       width: 200,
       hideInSearch: true,
       render: (_, r) =>
-        r.menuType === 'button' ? (
-          <Tag color="purple">{r.path}</Tag>
-        ) : (
-          r.path
-        ),
+        r.menuType === 'button' ? <Tag color="purple">{r.path}</Tag> : r.path,
     },
     {
       title: f('entity.menu.icon'),
@@ -193,7 +189,7 @@ const MenuList: React.FC = () => {
             danger
             icon={<DeleteOutlined />}
             onClick={() =>
-              Modal.confirm({
+              modal.confirm({
                 title: f('pages.system.menu.deleteConfirm'),
                 onOk: async () => {
                   await deleteMenu([r.idStr]);

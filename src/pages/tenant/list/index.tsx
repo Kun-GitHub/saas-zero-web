@@ -22,7 +22,7 @@ const statusColor: Record<string, string> = {
 const TenantList: React.FC = () => {
   const intl = useIntl();
   const actionRef = useRef<ActionType>(null);
-  const { message } = App.useApp();
+  const { message, modal } = App.useApp();
   const [modalOpen, setModalOpen] = useState(false);
   const [editRecord, setEditRecord] = useState<any>(null);
   const [form] = Form.useForm();
@@ -116,7 +116,7 @@ const TenantList: React.FC = () => {
             danger
             icon={<DeleteOutlined />}
             onClick={() =>
-              Modal.confirm({
+              modal.confirm({
                 title: f('pages.tenant.list.deleteConfirm'),
                 onOk: async () => {
                   await deleteTenant([r.idStr]);

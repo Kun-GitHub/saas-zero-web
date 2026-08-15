@@ -42,7 +42,7 @@ const flattenTree = (
 const DeptList: React.FC = () => {
   const intl = useIntl();
   const actionRef = useRef<ActionType>(null);
-  const { message } = App.useApp();
+  const { message, modal } = App.useApp();
   const [modalOpen, setModalOpen] = useState(false);
   const [editRecord, setEditRecord] = useState<any>(null);
   const [form] = Form.useForm();
@@ -66,7 +66,10 @@ const DeptList: React.FC = () => {
 
   const openEditModal = async (record: any) => {
     setEditRecord(record);
-    form.setFieldsValue(record);
+    form.setFieldsValue({
+      ...record,
+      parentId: record.parentIdStr || undefined,
+    });
     try {
       const res = await getDeptTree();
       setParentOptions(flattenTree(res));
@@ -134,7 +137,7 @@ const DeptList: React.FC = () => {
             danger
             icon={<DeleteOutlined />}
             onClick={() =>
-              Modal.confirm({
+              modal.confirm({
                 title: f('pages.system.dept.deleteConfirm'),
                 onOk: async () => {
                   await deleteDept([r.idStr]);

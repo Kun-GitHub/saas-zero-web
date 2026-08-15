@@ -1,7 +1,27 @@
 export default function access(
   initialState: { currentUser?: SaaS.CurrentUser } | undefined,
 ) {
-  const { currentUser } = initialState ?? {};
+  // While initialState is still loading, allow all routes to prevent flash of 404.
+  // The layout's onPageChange handler will redirect to /user/login if the user
+  // turns out to be unauthenticated once the state resolves.
+  if (!initialState) {
+    return {
+      isAdmin: true,
+      canAdmin: true,
+      routeFilter: () => true,
+      canManageUsers: true,
+      canManageRoles: true,
+      canManageMenus: true,
+      canManageDepts: true,
+      canManageTenants: true,
+      canManagePackages: true,
+      canManageApis: true,
+      canManageDicts: true,
+      canViewLogs: true,
+    };
+  }
+
+  const { currentUser } = initialState;
   const roleCodes = currentUser?.roleCodes || [];
   const permissions = currentUser?.permissions || [];
   const hasPermission = (code: string) => permissions.includes(code);

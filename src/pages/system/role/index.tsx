@@ -41,7 +41,7 @@ const statusColor: Record<string, string> = {
 const RoleList: React.FC = () => {
   const intl = useIntl();
   const actionRef = useRef<ActionType>(null);
-  const { message } = App.useApp();
+  const { message, modal } = App.useApp();
   const [modalOpen, setModalOpen] = useState(false);
   const [editRecord, setEditRecord] = useState<SaaS.SysRole | null>(null);
   const [form] = Form.useForm();
@@ -139,7 +139,7 @@ const RoleList: React.FC = () => {
             danger
             icon={<DeleteOutlined />}
             onClick={() =>
-              Modal.confirm({
+              modal.confirm({
                 title: f('pages.system.role.deleteConfirm'),
                 onOk: async () => {
                   await deleteRole([r.idStr!]);

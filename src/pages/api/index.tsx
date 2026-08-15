@@ -23,7 +23,7 @@ const methodColor: Record<string, string> = {
 const ApiList: React.FC = () => {
   const intl = useIntl();
   const actionRef = useRef<ActionType>(null);
-  const { message } = App.useApp();
+  const { message, modal } = App.useApp();
   const f = (id: string) => intl.formatMessage({ id });
   const [modalOpen, setModalOpen] = useState(false);
   const [editRecord, setEditRecord] = useState<any>(null);
@@ -95,7 +95,7 @@ const ApiList: React.FC = () => {
             danger
             icon={<DeleteOutlined />}
             onClick={() =>
-              Modal.confirm({
+              modal.confirm({
                 title: f('pages.api.deleteConfirm'),
                 onOk: async () => {
                   await deleteApi([r.idStr]);

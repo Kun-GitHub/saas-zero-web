@@ -29,7 +29,7 @@ import { formatDateTime } from '@/utils/datetime';
 
 const DictPage: React.FC = () => {
   const intl = useIntl();
-  const { message } = App.useApp();
+  const { message, modal } = App.useApp();
   const f = (id: string) => intl.formatMessage({ id });
   const [dicts, setDicts] = useState<SaaS.SysDict[]>([]);
   const [selectedDict, setSelectedDict] = useState<SaaS.SysDict | null>(null);
@@ -64,7 +64,7 @@ const DictPage: React.FC = () => {
 
   const handleDeleteDict = (dict: SaaS.SysDict, e: React.MouseEvent) => {
     e.stopPropagation();
-    Modal.confirm({
+    modal.confirm({
       title: f('pages.dict.deleteConfirm'),
       onOk: async () => {
         await deleteDict([dict.idStr!]);
@@ -126,7 +126,7 @@ const DictPage: React.FC = () => {
             danger
             icon={<DeleteOutlined />}
             onClick={() =>
-              Modal.confirm({
+              modal.confirm({
                 title: f('pages.dict.deleteConfirm'),
                 onOk: async () => {
                   await deleteDictData([r.idStr]);
