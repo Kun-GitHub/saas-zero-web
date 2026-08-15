@@ -4,7 +4,7 @@ import type { Settings as LayoutSettings } from '@ant-design/pro-components';
 import { SettingDrawer } from '@ant-design/pro-components';
 import type { RequestConfig, RunTimeLayoutConfig } from '@umijs/max';
 import { history, useIntl } from '@umijs/max';
-import { Dropdown } from 'antd';
+import { Dropdown, message } from 'antd';
 import React from 'react';
 import { SelectLang } from '@/components';
 import PageTabs from '@/components/PageTabs';
@@ -259,6 +259,9 @@ export const request: RequestConfig = {
         }, 100);
         return;
       }
+      // 非鉴权错误（业务校验 400 / 服务端 500 等）统一提示，
+      // 避免删除等操作失败时“点了没反应”（Modal.confirm onOk reject 后无任何反馈）
+      message.error(error.message || '请求失败');
     },
   },
 };

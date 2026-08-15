@@ -5,7 +5,11 @@ import {
   SafetyCertificateOutlined,
   UserOutlined,
 } from '@ant-design/icons';
-import { LoginForm, ProFormCheckbox, ProFormText } from '@ant-design/pro-components';
+import {
+  LoginForm,
+  ProFormCheckbox,
+  ProFormText,
+} from '@ant-design/pro-components';
 import { Helmet, SelectLang, useIntl, useModel } from '@umijs/max';
 import { App } from 'antd';
 import { createStyles } from 'antd-style';
@@ -32,7 +36,8 @@ const useStyles = createStyles(({ token }) => ({
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
-    background: 'linear-gradient(135deg, #1e3a5f 0%, #2563eb 50%, #4f46e5 100%)',
+    background:
+      'linear-gradient(135deg, #1e3a5f 0%, #2563eb 50%, #4f46e5 100%)',
     color: '#fff',
     position: 'relative',
     overflow: 'hidden',
@@ -203,8 +208,8 @@ const Login: React.FC = () => {
       });
       const urlParams = new URL(window.location.href).searchParams;
       window.location.href = urlParams.get('redirect') || '/';
-    } catch (e: any) {
-      message.error(e?.message || f('pages.login.failure'));
+    } catch {
+      // 错误提示由全局 errorHandler 统一处理，这里仅刷新验证码
       loadCaptcha();
     } finally {
       setLoading(false);
@@ -214,7 +219,9 @@ const Login: React.FC = () => {
   return (
     <div className={styles.container}>
       <Helmet>
-        <title>{f('menu.login')} - {Settings.title}</title>
+        <title>
+          {f('menu.login')} - {Settings.title}
+        </title>
       </Helmet>
       <div className={styles.lang}>
         <SelectLang />
@@ -225,9 +232,7 @@ const Login: React.FC = () => {
             <BuildOutlined />
           </div>
           <div className={styles.systemName}>SaaS-Zero</div>
-          <div className={styles.systemDesc}>
-            {f('pages.login.subtitle')}
-          </div>
+          <div className={styles.systemDesc}>{f('pages.login.subtitle')}</div>
         </div>
       </div>
       <div className={styles.rightPanel}>
@@ -238,7 +243,12 @@ const Login: React.FC = () => {
             logo={false}
             title={false}
             subTitle={false}
-            initialValues={{ tenantCode: 'default', username: 'admin', password: '123456', autoLogin: true }}
+            initialValues={{
+              tenantCode: 'default',
+              username: 'admin',
+              password: '123456',
+              autoLogin: true,
+            }}
             onFinish={handleSubmit}
             submitter={{
               searchConfig: { submitText: f('pages.login.submit') },
@@ -252,7 +262,12 @@ const Login: React.FC = () => {
                 prefix: <BuildOutlined style={{ color: '#94a3b8' }} />,
                 placeholder: f('pages.login.tenantCode.placeholder'),
               }}
-              rules={[{ required: true, message: f('pages.login.tenantCode.required') }]}
+              rules={[
+                {
+                  required: true,
+                  message: f('pages.login.tenantCode.required'),
+                },
+              ]}
             />
             <ProFormText
               name="username"
@@ -261,7 +276,9 @@ const Login: React.FC = () => {
                 prefix: <UserOutlined style={{ color: '#94a3b8' }} />,
                 placeholder: f('pages.login.username.placeholder'),
               }}
-              rules={[{ required: true, message: f('pages.login.username.required') }]}
+              rules={[
+                { required: true, message: f('pages.login.username.required') },
+              ]}
             />
             <ProFormText.Password
               name="password"
@@ -270,7 +287,9 @@ const Login: React.FC = () => {
                 prefix: <LockOutlined style={{ color: '#94a3b8' }} />,
                 placeholder: f('pages.login.password.placeholder'),
               }}
-              rules={[{ required: true, message: f('pages.login.password.required') }]}
+              rules={[
+                { required: true, message: f('pages.login.password.required') },
+              ]}
             />
             <div className={styles.captchaRow}>
               <div className={styles.captchaInput}>
@@ -278,10 +297,17 @@ const Login: React.FC = () => {
                   name="captcha"
                   fieldProps={{
                     size: 'large',
-                    prefix: <SafetyCertificateOutlined style={{ color: '#94a3b8' }} />,
+                    prefix: (
+                      <SafetyCertificateOutlined style={{ color: '#94a3b8' }} />
+                    ),
                     placeholder: f('pages.login.captcha.placeholder'),
                   }}
-                  rules={[{ required: true, message: f('pages.login.captcha.required') }]}
+                  rules={[
+                    {
+                      required: true,
+                      message: f('pages.login.captcha.required'),
+                    },
+                  ]}
                 />
               </div>
               <div className={styles.captchaImgBox}>
@@ -301,7 +327,13 @@ const Login: React.FC = () => {
                 )}
               </div>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
               <ProFormCheckbox name="autoLogin">
                 {f('pages.login.rememberMe')}
               </ProFormCheckbox>
