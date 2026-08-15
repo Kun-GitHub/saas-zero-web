@@ -15,4 +15,5 @@ export default {
   'menu.loginLog': 'Login Logs',
   'menu.operationLog': 'Operation Logs',
   'menu.init': 'System Init',
+  'menu.accountCenter': 'Account Center',
 };

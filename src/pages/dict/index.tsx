@@ -25,6 +25,7 @@ import {
   updateDict,
   updateDictData,
 } from '@/services/saas-zero/dict';
+import { formatDateTime } from '@/utils/datetime';
 
 const DictPage: React.FC = () => {
   const intl = useIntl();
@@ -66,9 +67,9 @@ const DictPage: React.FC = () => {
     Modal.confirm({
       title: f('pages.dict.deleteConfirm'),
       onOk: async () => {
-        await deleteDict(dict.id || dict.idStr!);
+        await deleteDict([dict.idStr!]);
         message.success(f('message.deleteSuccess'));
-        if (selectedDict?.id === dict.id) {
+        if (selectedDict?.idStr === dict.idStr) {
           setSelectedDict(null);
           setDictData([]);
         }
@@ -90,6 +91,19 @@ const DictPage: React.FC = () => {
       ),
     },
     { title: f('entity.remark'), dataIndex: 'remark', key: 'remark' },
+    {
+      title: f('entity.updatedAt'),
+      dataIndex: 'updatedAt',
+      key: 'updatedAt',
+      width: 170,
+      render: (value: string) => formatDateTime(value),
+    },
+    {
+      title: f('entity.updatedBy'),
+      dataIndex: 'updatedBy',
+      key: 'updatedBy',
+      width: 110,
+    },
     {
       title: f('entity.action'),
       key: 'action',
@@ -115,9 +129,9 @@ const DictPage: React.FC = () => {
               Modal.confirm({
                 title: f('pages.dict.deleteConfirm'),
                 onOk: async () => {
-                  await deleteDictData(r.id);
+                  await deleteDictData([r.idStr]);
                   message.success(f('message.deleteSuccess'));
-                  loadDictData(selectedDict!.id || selectedDict!.idStr!);
+                  loadDictData(selectedDict!.idStr!);
                 },
               })
             }
@@ -151,17 +165,17 @@ const DictPage: React.FC = () => {
         >
           {dicts.map((d) => (
             <div
-              key={d.id || d.idStr}
+              key={d.idStr}
               onClick={async () => {
                 setSelectedDict(d);
-                await loadDictData(d.id || d.idStr!);
+                await loadDictData(d.idStr!);
               }}
               style={{
                 padding: '8px 12px',
                 cursor: 'pointer',
                 borderRadius: 8,
                 background:
-                  selectedDict?.id === d.id ? '#eff6ff' : 'transparent',
+                  selectedDict?.idStr === d.idStr ? '#eff6ff' : 'transparent',
                 marginBottom: 4,
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -171,6 +185,10 @@ const DictPage: React.FC = () => {
               <div>
                 <div style={{ fontWeight: 500 }}>{d.name}</div>
                 <div style={{ fontSize: 12, color: '#94a3b8' }}>{d.key}</div>
+                <div style={{ fontSize: 12, color: '#94a3b8' }}>
+                  {f('entity.updatedAt')}: {formatDateTime(d.updatedAt)} ·{' '}
+                  {f('entity.updatedBy')}: {d.updatedBy || '-'}
+                </div>
               </div>
               <Space size={4} onClick={(e) => e.stopPropagation()}>
                 <Button
@@ -211,7 +229,7 @@ const DictPage: React.FC = () => {
           }
         >
           <Table
-            rowKey="id"
+            rowKey="idStr"
             columns={dictDataColumns}
             dataSource={dictData}
             pagination={false}
@@ -224,7 +242,7 @@ const DictPage: React.FC = () => {
         onOk={async () => {
           const v = await dictForm.validateFields();
           if (editRecord) {
-            await updateDict({ ...v, id: editRecord.id || editRecord.idStr });
+            await updateDict({ ...v, id: editRecord.idStr });
           } else {
             await createDict(v);
           }
@@ -276,10 +294,10 @@ const DictPage: React.FC = () => {
           const v = await dataForm.validateFields();
           const body = {
             ...v,
-            dictId: selectedDict?.id || selectedDict?.idStr,
+            dictId: selectedDict?.idStr,
           };
           if (editData) {
-            await updateDictData({ ...body, id: editData.id });
+            await updateDictData({ ...body, id: editData.idStr });
           } else {
             await createDictData(body);
           }
@@ -287,8 +305,7 @@ const DictPage: React.FC = () => {
             f('message.' + (editData ? 'updateSuccess' : 'createSuccess')),
           );
           setDataModal(false);
-          if (selectedDict)
-            loadDictData(selectedDict.id || selectedDict.idStr!);
+          if (selectedDict) loadDictData(selectedDict.idStr!);
         }}
         onCancel={() => setDataModal(false)}
       >

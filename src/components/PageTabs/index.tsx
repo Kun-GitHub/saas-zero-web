@@ -16,6 +16,7 @@ const pathI18nKey: Record<string, string> = {
   '/log/login-log': 'menu.loginLog',
   '/log/operation-log': 'menu.operationLog',
   '/init': 'menu.init',
+  '/account/center': 'menu.accountCenter',
 };
 
 interface TabItem {

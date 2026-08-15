@@ -4,13 +4,11 @@ import type { Settings as LayoutSettings } from '@ant-design/pro-components';
 import { SettingDrawer } from '@ant-design/pro-components';
 import type { RequestConfig, RunTimeLayoutConfig } from '@umijs/max';
 import { history, useIntl } from '@umijs/max';
-import { App, Dropdown, Form, Input, Modal } from 'antd';
-import { createStyles } from 'antd-style';
-import React, { useCallback, useState } from 'react';
+import { Dropdown } from 'antd';
+import React from 'react';
 import { SelectLang } from '@/components';
 import PageTabs from '@/components/PageTabs';
 import {
-  changePassword,
   getCurrentUser,
   getMenus,
   getPermissions,
@@ -19,39 +17,6 @@ import defaultSettings from '../config/defaultSettings';
 
 const isDev = process.env.NODE_ENV === 'development' || process.env.CI;
 const loginPath = '/user/login';
-
-const useStyles = createStyles(({ token }) => ({
-  userContainer: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-    cursor: 'pointer',
-  },
-  userAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: '50%',
-    background: `linear-gradient(135deg, ${token.colorPrimary}, #6366f1)`,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: '#fff',
-    fontSize: 14,
-  },
-  userInfo: {
-    lineHeight: 1.2,
-    textAlign: 'left' as const,
-  },
-  userName: {
-    fontSize: 14,
-    fontWeight: 500,
-    color: token.colorText,
-  },
-  userRole: {
-    fontSize: 12,
-    color: token.colorTextSecondary,
-  },
-}));
 
 export async function getInitialState(): Promise<{
   settings?: Partial<LayoutSettings>;
@@ -86,10 +51,19 @@ export async function getInitialState(): Promise<{
       fetchUserInfo(),
       getMenus().catch(() => undefined),
     ]);
-    const menuData =
+    const baseMenuData =
       apiMenus && apiMenus.length > 0
         ? apiMenus.map((m: any) => apiMenuToLayout(m))
-        : undefined;
+        : [];
+    const menuData = [
+      ...baseMenuData,
+      {
+        key: '/account/center',
+        name: 'accountCenter',
+        path: '/account/center',
+        icon: <UserOutlined />,
+      },
+    ];
     return {
       fetchUserInfo,
       currentUser,
@@ -120,6 +94,45 @@ const apiMenuToLayout = (m: any): any => {
   };
 };
 
+const AvatarDropdown: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const intl = useIntl();
+  const f = (id: string) => intl.formatMessage({ id });
+  return (
+    <Dropdown
+      menu={{
+        items: [
+          {
+            key: 'profile',
+            icon: <UserOutlined />,
+            label: f('app.profile'),
+            onClick: () => history.push('/account/center'),
+          },
+          {
+            key: 'changePassword',
+            icon: <KeyOutlined />,
+            label: f('app.changePassword'),
+            onClick: () => history.push('/account/center'),
+          },
+          { type: 'divider' as const },
+          {
+            key: 'logout',
+            icon: <LogoutOutlined />,
+            label: f('app.logout'),
+            onClick: () => {
+              sessionStorage.removeItem('saas-zero-token');
+              history.push(loginPath);
+            },
+          },
+        ],
+      }}
+    >
+      {children}
+    </Dropdown>
+  );
+};
+
 const iconCache = new Map<string, React.ReactNode>();
 const resolveIcon = (name: string): React.ReactNode => {
   if (iconCache.has(name)) return iconCache.get(name);
@@ -133,141 +146,23 @@ const resolveIcon = (name: string): React.ReactNode => {
   return node;
 };
 
-const AvatarContent: React.FC<{ currentUser?: SaaS.CurrentUser }> = ({
-  currentUser,
-}) => {
-  const { styles } = useStyles();
-  const { message } = App.useApp();
-  const intl = useIntl();
-  const f = (id: string) => intl.formatMessage({ id });
-
-  const [pwdModalOpen, setPwdModalOpen] = useState(false);
-  const [pwdForm] = Form.useForm();
-  const [pwdLoading, setPwdLoading] = useState(false);
-
-  const onLogout = useCallback(() => {
-    sessionStorage.removeItem('saas-zero-token');
-    message.success(f('app.logout.success'));
-    history.push(loginPath);
-  }, [message, f]);
-
-  const handleChangePassword = async () => {
-    try {
-      const values = await pwdForm.validateFields();
-      if (values.newPassword !== values.confirmPassword) {
-        message.error(f('app.password.mismatch'));
-        return;
-      }
-      setPwdLoading(true);
-      await changePassword({
-        oldPassword: values.oldPassword,
-        newPassword: values.newPassword,
-      });
-      message.success(f('app.password.success'));
-      setPwdModalOpen(false);
-      pwdForm.resetFields();
-    } catch (e: any) {
-      if (e?.message) message.error(e.message);
-    } finally {
-      setPwdLoading(false);
-    }
-  };
-
-  if (!currentUser) return null;
-
-  return (
-    <>
-      <Dropdown
-        menu={{
-          items: [
-            {
-              key: 'profile',
-              icon: <UserOutlined />,
-              label: f('app.profile'),
-              disabled: true,
-            },
-            {
-              key: 'changePassword',
-              icon: <KeyOutlined />,
-              label: f('app.changePassword'),
-              onClick: () => {
-                pwdForm.resetFields();
-                setPwdModalOpen(true);
-              },
-            },
-            { type: 'divider' },
-            {
-              key: 'logout',
-              icon: <LogoutOutlined />,
-              label: f('app.logout'),
-              onClick: onLogout,
-            },
-          ],
-        }}
-      >
-        <div className={styles.userContainer}>
-          <div className={styles.userAvatar}>
-            <UserOutlined />
-          </div>
-          <div className={styles.userInfo}>
-            <div className={styles.userName}>
-              {currentUser.nickname || currentUser.userName}
-            </div>
-            <div className={styles.userRole}>
-              {currentUser.roleCodes?.join(', ') || f('app.defaultRole')}
-            </div>
-          </div>
-        </div>
-      </Dropdown>
-      <Modal
-        title={f('app.changePassword')}
-        open={pwdModalOpen}
-        onOk={handleChangePassword}
-        onCancel={() => setPwdModalOpen(false)}
-        confirmLoading={pwdLoading}
-      >
-        <Form form={pwdForm} layout="vertical">
-          <Form.Item
-            name="oldPassword"
-            label={f('app.password.old')}
-            rules={[{ required: true, message: f('app.password.oldRequired') }]}
-          >
-            <Input.Password />
-          </Form.Item>
-          <Form.Item
-            name="newPassword"
-            label={f('app.password.new')}
-            rules={[
-              { required: true, message: f('app.password.newRequired') },
-              { min: 6, message: f('app.password.minLength') },
-            ]}
-          >
-            <Input.Password />
-          </Form.Item>
-          <Form.Item
-            name="confirmPassword"
-            label={f('entity.confirmPassword')}
-            rules={[
-              { required: true, message: f('app.password.confirmRequired') },
-            ]}
-          >
-            <Input.Password />
-          </Form.Item>
-        </Form>
-      </Modal>
-    </>
-  );
-};
-
 export const layout: RunTimeLayoutConfig = ({
   initialState,
   setInitialState,
 }) => {
+  const currentUser = initialState?.currentUser;
   return {
     actionsRender: () => [<SelectLang key="SelectLang" />],
-    avatarProps: false as any,
+    avatarProps: currentUser
+      ? {
+          title: currentUser.nickname || currentUser.userName,
+          render: (_: any, defaultDom: React.ReactNode) => (
+            <AvatarDropdown>{defaultDom}</AvatarDropdown>
+          ),
+        }
+      : undefined,
     waterMarkProps: {
-      content: initialState?.currentUser?.userName,
+      content: currentUser?.userName,
     },
     footerRender: false,
     onPageChange: () => {
@@ -285,9 +180,6 @@ export const layout: RunTimeLayoutConfig = ({
       : undefined,
     links: [],
     menuHeaderRender: undefined,
-    rightContentRender: () => (
-      <AvatarContent currentUser={initialState?.currentUser} />
-    ),
     childrenRender: (children) => {
       return (
         <PageTabs>

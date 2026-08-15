@@ -123,6 +123,13 @@ export default {
   'app.tabs.closeCurrent': 'Close Current Tab',
   'app.noPermission': 'No Permission',
 
+  // Account center
+  'account.basicInfo': 'Basic Information',
+  'account.security': 'Security Settings',
+  'account.editProfile': 'Edit Profile',
+  'account.loginPassword': 'Login Password',
+  'account.loginPasswordDesc': 'Change your password regularly for security',
+
   'entity.username': 'Username',
   'entity.nickname': 'Nickname',
   'entity.mobile': 'Mobile',
@@ -142,6 +149,7 @@ export default {
   'entity.lastLogin': 'Last Login',
   'entity.createdAt': 'Created At',
   'entity.updatedAt': 'Updated At',
+  'entity.updatedBy': 'Updated By',
   'entity.action': 'Action',
   'entity.edit': 'Edit',
   'entity.delete': 'Delete',

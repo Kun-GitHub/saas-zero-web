@@ -14,6 +14,7 @@ import { getLoginLogList, getOperationLogList } from '@/services/saas-zero/log';
 import { getRoleList } from '@/services/saas-zero/role';
 import { getTenantList } from '@/services/saas-zero/tenant';
 import { getUserList } from '@/services/saas-zero/user';
+import { formatDateTime } from '@/utils/datetime';
 
 const Dashboard: React.FC = () => {
   const intl = useIntl();
@@ -110,7 +111,7 @@ const Dashboard: React.FC = () => {
                       <Tag color="blue">{log.module}</Tag>
                       {log.operation}
                       <div style={{ fontSize: 12, color: '#94a3b8' }}>
-                        {log.createdAt}
+                        {formatDateTime(log.createdAt)}
                       </div>
                     </>
                   ),

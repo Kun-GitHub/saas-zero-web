@@ -20,6 +20,7 @@ import {
   getDeptTree,
   updateDept,
 } from '@/services/saas-zero/dept';
+import { formatDateTime } from '@/utils/datetime';
 
 const flattenTree = (
   items: any[],
@@ -103,6 +104,19 @@ const DeptList: React.FC = () => {
       title: f('entity.sort'),
       dataIndex: 'sort',
       width: 60,
+      hideInSearch: true,
+    },
+    {
+      title: f('entity.updatedAt'),
+      dataIndex: 'updatedAt',
+      width: 170,
+      hideInSearch: true,
+      renderText: (value) => formatDateTime(value),
+    },
+    {
+      title: f('entity.updatedBy'),
+      dataIndex: 'updatedBy',
+      width: 110,
       hideInSearch: true,
     },
     {
@@ -196,9 +210,6 @@ const DeptList: React.FC = () => {
                 label: o.name,
               }))}
             />
-          </Form.Item>
-          <Form.Item name="leaderId" label={f('entity.log.operator')}>
-            <Input />
           </Form.Item>
           <Form.Item name="phone" label={f('entity.mobile')}>
             <Input />

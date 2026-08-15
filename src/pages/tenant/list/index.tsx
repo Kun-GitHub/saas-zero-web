@@ -2,17 +2,7 @@ import { DeleteOutlined, PlusOutlined, SwapOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns } from '@ant-design/pro-components';
 import { ProTable } from '@ant-design/pro-components';
 import { useIntl } from '@umijs/max';
-import {
-  App,
-  Button,
-  Form,
-  Input,
-  InputNumber,
-  Modal,
-  Select,
-  Space,
-  Tag,
-} from 'antd';
+import { App, Button, Form, Input, Modal, Select, Space, Tag } from 'antd';
 import React, { useRef, useState } from 'react';
 import {
   changeTenantStatus,
@@ -21,6 +11,7 @@ import {
   getTenantList,
   updateTenant,
 } from '@/services/saas-zero/tenant';
+import { formatDateTime } from '@/utils/datetime';
 
 const statusColor: Record<string, string> = {
   active: 'green',
@@ -56,8 +47,9 @@ const TenantList: React.FC = () => {
     {
       title: f('entity.tenant.expiry'),
       dataIndex: 'expiredAt',
-      width: 120,
+      width: 170,
       hideInSearch: true,
+      renderText: (value) => formatDateTime(value),
     },
     {
       title: f('entity.status'),
@@ -74,9 +66,16 @@ const TenantList: React.FC = () => {
       ),
     },
     {
-      title: f('entity.createdAt'),
-      dataIndex: 'createdAt',
+      title: f('entity.updatedAt'),
+      dataIndex: 'updatedAt',
       width: 170,
+      hideInSearch: true,
+      renderText: (value) => formatDateTime(value),
+    },
+    {
+      title: f('entity.updatedBy'),
+      dataIndex: 'updatedBy',
+      width: 110,
       hideInSearch: true,
     },
     {
@@ -102,7 +101,7 @@ const TenantList: React.FC = () => {
             icon={<SwapOutlined />}
             onClick={async () => {
               await changeTenantStatus({
-                id: r.id,
+                id: r.idStr,
                 status: r.status === 'active' ? 'frozen' : 'active',
               });
               message.success(f('message.operationSuccess'));
@@ -120,7 +119,7 @@ const TenantList: React.FC = () => {
               Modal.confirm({
                 title: f('pages.tenant.list.deleteConfirm'),
                 onOk: async () => {
-                  await deleteTenant([Number(r.id)]);
+                  await deleteTenant([r.idStr]);
                   message.success(f('message.deleteSuccess'));
                   actionRef.current?.reload();
                 },
@@ -137,7 +136,7 @@ const TenantList: React.FC = () => {
   return (
     <>
       <ProTable
-        rowKey="id"
+        rowKey="idStr"
         actionRef={actionRef}
         columns={columns}
         request={async (params) => {
@@ -179,7 +178,7 @@ const TenantList: React.FC = () => {
         onOk={async () => {
           const values = await form.validateFields();
           if (editRecord) {
-            await updateTenant({ ...values, id: editRecord.id });
+            await updateTenant({ ...values, id: editRecord.idStr });
           } else {
             await createTenant(values);
           }

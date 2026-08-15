@@ -156,6 +156,24 @@ export async function getCaptcha() {
 
 其他服务函数同理需从 `{ code, msg, data }` 结构取 data，或让全局 responseInterceptors 统一拆包。
 
+## ID 字段规范（双字段模式）
+
+前端 JS `Number` 只能安全表示 -2^53 ~ 2^53 的整数，Go `int64` 超出此范围会精度丢失。
+
+所有响应类型采用**双字段模式**：
+
+| 字段 | TS 类型 | 说明 |
+|---|---|---|
+| `id` | `number` | 整型 ID，用于展示/比较 |
+| `idStr` | `string` | 字符串 ID，**所有 API 传参必须使用此字段** |
+
+**关键规则：**
+- `id` 是 `number` 类型，`idStr` 是 `string` 类型，两者不可混用
+- 所有 API 请求（create/update/delete/detail/assignRoles/changeStatus 等）传 `id` 时，必须使用 `idStr` 的值
+- ProTable 的 `rowKey` 必须使用 `"idStr"`（不要用 `"id"`）
+- 请求 DTO 的 `id` 字段类型为 `string`，因为前端填入的是 `idStr` 的值
+- 禁止使用 `r.idStr || r.id` 这种回退写法，后端始终返回 `id` + `idStr` 两个字段
+
 ## 类型定义
 
 所有 SaaS 业务类型定义在 `typings.d.ts` 的 `declare namespace SaaS { }` 中，按实体分组：

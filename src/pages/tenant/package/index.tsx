@@ -20,6 +20,7 @@ import {
   getPackageList,
   updatePackage,
 } from '@/services/saas-zero/package';
+import { formatDateTime } from '@/utils/datetime';
 
 const PackageList: React.FC = () => {
   const intl = useIntl();
@@ -81,6 +82,10 @@ const PackageList: React.FC = () => {
                     ? f('status.active')
                     : f('status.inactive')}
                 </Tag>
+              </div>
+              <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 12 }}>
+                {f('entity.updatedAt')}: {formatDateTime(pkg.updatedAt)} ·{' '}
+                {f('entity.updatedBy')}: {pkg.updatedBy || '-'}
               </div>
               <div style={{ marginTop: 16, display: 'flex', gap: 8 }}>
                 <Button

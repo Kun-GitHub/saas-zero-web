@@ -10,6 +10,7 @@ import {
   getApiList,
   updateApi,
 } from '@/services/saas-zero/api';
+import { formatDateTime } from '@/utils/datetime';
 
 const methodColor: Record<string, string> = {
   POST: 'green',
@@ -59,6 +60,19 @@ const ApiList: React.FC = () => {
       ),
     },
     {
+      title: f('entity.updatedAt'),
+      dataIndex: 'updatedAt',
+      width: 170,
+      hideInSearch: true,
+      renderText: (value) => formatDateTime(value),
+    },
+    {
+      title: f('entity.updatedBy'),
+      dataIndex: 'updatedBy',
+      width: 110,
+      hideInSearch: true,
+    },
+    {
       title: f('entity.action'),
       width: 140,
       hideInSearch: true,
@@ -84,7 +98,7 @@ const ApiList: React.FC = () => {
               Modal.confirm({
                 title: f('pages.api.deleteConfirm'),
                 onOk: async () => {
-                  await deleteApi([Number(r.id)]);
+                  await deleteApi([r.idStr]);
                   message.success(f('message.deleteSuccess'));
                   actionRef.current?.reload();
                 },
@@ -101,7 +115,7 @@ const ApiList: React.FC = () => {
   return (
     <>
       <ProTable
-        rowKey="id"
+        rowKey="idStr"
         actionRef={actionRef}
         columns={columns}
         request={async (params) => {
@@ -137,7 +151,7 @@ const ApiList: React.FC = () => {
         onOk={async () => {
           const values = await form.validateFields();
           if (editRecord) {
-            await updateApi({ ...values, id: editRecord.id });
+            await updateApi({ ...values, id: editRecord.idStr });
           } else {
             await createApi(values);
           }

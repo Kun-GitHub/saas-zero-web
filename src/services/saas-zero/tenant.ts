@@ -14,7 +14,7 @@ export async function updateTenant(body: any) {
   });
 }
 
-export async function deleteTenant(ids: number[]) {
+export async function deleteTenant(ids: string[]) {
   return request<SaaS.EmptyResp>('/system/tenant/delete', {
     method: 'POST',
     data: { ids },
@@ -28,7 +28,7 @@ export async function getTenantList(params: SaaS.TenantQuery) {
   });
 }
 
-export async function getTenantDetail(id: number) {
+export async function getTenantDetail(id: string) {
   return request<SaaS.SysTenant>('/system/tenant/detail', {
     method: 'GET',
     params: { id },

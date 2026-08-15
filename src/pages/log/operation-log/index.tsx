@@ -4,6 +4,7 @@ import { useIntl } from '@umijs/max';
 import { Tag } from 'antd';
 import React, { useRef } from 'react';
 import { getOperationLogList } from '@/services/saas-zero/log';
+import { formatDateTime } from '@/utils/datetime';
 
 const OperationLogList: React.FC = () => {
   const intl = useIntl();
@@ -41,12 +42,13 @@ const OperationLogList: React.FC = () => {
       dataIndex: 'createdAt',
       width: 170,
       hideInSearch: true,
+      renderText: (value) => formatDateTime(value),
     },
   ];
 
   return (
     <ProTable
-      rowKey="id"
+      rowKey="idStr"
       actionRef={actionRef}
       columns={columns}
       request={async (params) => {

@@ -29,6 +29,7 @@ import {
   resetUserPassword,
   updateUser,
 } from '@/services/saas-zero/user';
+import { formatDateTime } from '@/utils/datetime';
 
 const statusColor: Record<string, string> = {
   active: 'green',
@@ -40,7 +41,7 @@ const statusColor: Record<string, string> = {
 const UserList: React.FC = () => {
   const intl = useIntl();
   const actionRef = useRef<ActionType>(null);
-  const { message } = App.useApp();
+  const { message, modal } = App.useApp();
   const [modalOpen, setModalOpen] = useState(false);
   const [editRecord, setEditRecord] = useState<SaaS.SysUser | null>(null);
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
@@ -53,7 +54,7 @@ const UserList: React.FC = () => {
 
   const [pwdModalOpen, setPwdModalOpen] = useState(false);
   const [pwdUser, setPwdUser] = useState<SaaS.SysUser | null>(null);
-  const [newPassword, setNewPassword] = useState('');
+  const [pwdForm] = Form.useForm();
 
   const [deptTree, setDeptTree] = useState<any[]>([]);
 
@@ -111,26 +112,29 @@ const UserList: React.FC = () => {
       hideInSearch: true,
     },
     {
-      title: f('entity.createdAt'),
-      dataIndex: 'createdAt',
+      title: f('entity.updatedAt'),
+      dataIndex: 'updatedAt',
       width: 170,
+      hideInSearch: true,
+      renderText: (value) => formatDateTime(value),
+    },
+    {
+      title: f('entity.updatedBy'),
+      dataIndex: 'updatedBy',
+      width: 110,
       hideInSearch: true,
     },
     {
       title: f('entity.action'),
-      width: 260,
+      width: 400,
+      fixed: 'right',
       hideInSearch: true,
       render: (_, record) => (
-        <Space>
+        <Space size={0}>
           <Button
             type="link"
             size="small"
-            onClick={() => {
-              setEditRecord(record);
-              form.setFieldsValue(record);
-              loadDeptTree();
-              setModalOpen(true);
-            }}
+            onClick={() => openEditModal(record)}
           >
             {f('entity.edit')}
           </Button>
@@ -155,8 +159,8 @@ const UserList: React.FC = () => {
             size="small"
             danger
             icon={<DeleteOutlined />}
-            onClick={async () => {
-              Modal.confirm({
+            onClick={() => {
+              modal.confirm({
                 title: f('pages.system.user.deleteConfirm'),
                 onOk: async () => {
                   await deleteUser([record.idStr!]);
@@ -173,11 +177,46 @@ const UserList: React.FC = () => {
     },
   ];
 
+  const openEditModal = async (user: SaaS.SysUser) => {
+    setEditRecord(user);
+    form.resetFields();
+    form.setFieldsValue({
+      ...user,
+      // TreeSelect uses lossless string IDs. Using the numeric deptId makes
+      // Ant Design render the raw ID because it cannot match an option.
+      deptId: user.deptIdStr || undefined,
+    });
+    await loadDeptTree();
+    setModalOpen(true);
+  };
+
+  const openCreateModal = async () => {
+    setEditRecord(null);
+    form.resetFields();
+    await loadDeptTree();
+    setModalOpen(true);
+  };
+
   const openRoleModal = async (user: SaaS.SysUser) => {
     setRoleUser(user);
-    setSelectedRoleIds(user.roleIds || []);
-    const res = await getRoleList({ page: 1, pageSize: 9999 });
-    setAllRoles(res.list || []);
+    const res = await getRoleList({ page: 1, pageSize: 100 });
+    const roles = res.list || [];
+    setAllRoles(roles);
+
+    const roleIds = new Set((user.roleIds || []).map(String));
+    let selectedIds = roles
+      .filter((role) => role.idStr && roleIds.has(role.idStr))
+      .map((role) => role.idStr!);
+
+    // Keep the edit modal usable against an older API response that returned
+    // Snowflake role IDs as imprecise JSON numbers.
+    if (selectedIds.length === 0 && user.roleCodes?.length) {
+      const roleCodes = new Set(user.roleCodes);
+      selectedIds = roles
+        .filter((role) => role.idStr && roleCodes.has(role.code))
+        .map((role) => role.idStr!);
+    }
+    setSelectedRoleIds(selectedIds);
     setRoleModalOpen(true);
   };
 
@@ -191,19 +230,24 @@ const UserList: React.FC = () => {
 
   const openPwdModal = (user: SaaS.SysUser) => {
     setPwdUser(user);
-    setNewPassword('');
+    pwdForm.resetFields();
     setPwdModalOpen(true);
   };
 
   const handlePwdOk = async () => {
-    if (!pwdUser || !newPassword) return;
-    await resetUserPassword({ id: pwdUser.idStr!, password: newPassword });
+    if (!pwdUser) return;
+    const values = await pwdForm.validateFields();
+    await resetUserPassword({
+      id: pwdUser.idStr!,
+      password: values.newPassword,
+    });
     message.success(f('message.resetSuccess'));
     setPwdModalOpen(false);
+    pwdForm.resetFields();
   };
 
-  const handleBatchDelete = async () => {
-    Modal.confirm({
+  const handleBatchDelete = () => {
+    modal.confirm({
       title: f('pages.system.user.batchDeleteConfirm'),
       content: f('pages.system.user.batchDeleteContent').replace(
         '{count}',
@@ -234,6 +278,7 @@ const UserList: React.FC = () => {
           return { data: res.list, success: true, total: res.total };
         }}
         rowSelection={{ selectedRowKeys, onChange: setSelectedRowKeys }}
+        scroll={{ x: 1450 }}
         toolBarRender={() => [
           selectedRowKeys.length > 0 && (
             <Button
@@ -249,12 +294,7 @@ const UserList: React.FC = () => {
             key="create"
             type="primary"
             icon={<PlusOutlined />}
-            onClick={() => {
-              setEditRecord(null);
-              form.resetFields();
-              loadDeptTree();
-              setModalOpen(true);
-            }}
+            onClick={openCreateModal}
           >
             {f('pages.system.user.create')}
           </Button>,
@@ -275,12 +315,19 @@ const UserList: React.FC = () => {
         onOk={async () => {
           const values = await form.validateFields();
           if (editRecord) {
-            await updateUser({ ...values, id: editRecord.idStr! });
+            await updateUser({
+              id: editRecord.idStr!,
+              nickname: values.nickname,
+              mobile: values.mobile,
+              email: values.email,
+              deptId: values.deptId,
+              status: values.status,
+            });
           } else {
             await createUser(values);
           }
           message.success(
-            f('message.' + (editRecord ? 'updateSuccess' : 'createSuccess')),
+            f(`message.${editRecord ? 'updateSuccess' : 'createSuccess'}`),
           );
           setModalOpen(false);
           actionRef.current?.reload();
@@ -293,7 +340,7 @@ const UserList: React.FC = () => {
             label={f('entity.username')}
             rules={[{ required: true }]}
           >
-            <Input />
+            <Input disabled={Boolean(editRecord)} />
           </Form.Item>
           {!editRecord && (
             <Form.Item
@@ -366,13 +413,41 @@ const UserList: React.FC = () => {
         }
         open={pwdModalOpen}
         onOk={handlePwdOk}
-        onCancel={() => setPwdModalOpen(false)}
+        onCancel={() => {
+          setPwdModalOpen(false);
+          pwdForm.resetFields();
+        }}
       >
-        <Input.Password
-          value={newPassword}
-          onChange={(e) => setNewPassword(e.target.value)}
-          placeholder={f('entity.newPassword')}
-        />
+        <Form form={pwdForm} layout="vertical">
+          <Form.Item
+            name="newPassword"
+            label={f('entity.newPassword')}
+            rules={[
+              { required: true, message: f('app.password.newRequired') },
+              { min: 6, message: f('app.password.minLength') },
+            ]}
+          >
+            <Input.Password autoComplete="new-password" />
+          </Form.Item>
+          <Form.Item
+            name="confirmPassword"
+            label={f('entity.confirmPassword')}
+            dependencies={['newPassword']}
+            rules={[
+              { required: true, message: f('app.password.confirmRequired') },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  if (!value || getFieldValue('newPassword') === value) {
+                    return Promise.resolve();
+                  }
+                  return Promise.reject(new Error(f('app.password.mismatch')));
+                },
+              }),
+            ]}
+          >
+            <Input.Password autoComplete="new-password" />
+          </Form.Item>
+        </Form>
       </Modal>
     </>
   );

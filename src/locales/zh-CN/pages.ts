@@ -122,6 +122,13 @@ export default {
   'app.tabs.closeCurrent': '关闭当前标签',
   'app.noPermission': '无权限访问',
 
+  // Account center
+  'account.basicInfo': '基本信息',
+  'account.security': '安全设置',
+  'account.editProfile': '编辑个人信息',
+  'account.loginPassword': '登录密码',
+  'account.loginPasswordDesc': '定期修改密码以保障账号安全',
+
   'entity.username': '用户名',
   'entity.nickname': '昵称',
   'entity.mobile': '手机号',
@@ -140,7 +147,8 @@ export default {
   'entity.remark': '备注',
   'entity.lastLogin': '最后登录',
   'entity.createdAt': '创建时间',
-  'entity.updatedAt': '更新时间',
+  'entity.updatedAt': '修改时间',
+  'entity.updatedBy': '修改人',
   'entity.action': '操作',
   'entity.edit': '编辑',
   'entity.delete': '删除',

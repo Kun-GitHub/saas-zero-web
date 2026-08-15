@@ -15,4 +15,5 @@ export default {
   'menu.loginLog': '登录日志',
   'menu.operationLog': '操作日志',
   'menu.init': '系统初始化',
+  'menu.accountCenter': '个人中心',
 };

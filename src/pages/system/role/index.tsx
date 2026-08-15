@@ -31,6 +31,7 @@ import {
   getRoleList,
   updateRole,
 } from '@/services/saas-zero/role';
+import { formatDateTime } from '@/utils/datetime';
 
 const statusColor: Record<string, string> = {
   active: 'green',
@@ -87,9 +88,16 @@ const RoleList: React.FC = () => {
       hideInSearch: true,
     },
     {
-      title: f('entity.createdAt'),
-      dataIndex: 'createdAt',
+      title: f('entity.updatedAt'),
+      dataIndex: 'updatedAt',
       width: 170,
+      hideInSearch: true,
+      renderText: (value) => formatDateTime(value),
+    },
+    {
+      title: f('entity.updatedBy'),
+      dataIndex: 'updatedBy',
+      width: 110,
       hideInSearch: true,
     },
     {

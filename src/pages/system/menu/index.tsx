@@ -20,6 +20,7 @@ import {
   getMenuTree,
   updateMenu,
 } from '@/services/saas-zero/menu';
+import { formatDateTime } from '@/utils/datetime';
 
 const typeColor: Record<string, string> = {
   directory: 'blue',
@@ -121,6 +122,19 @@ const MenuList: React.FC = () => {
       title: f('entity.sort'),
       dataIndex: 'sort',
       width: 60,
+      hideInSearch: true,
+    },
+    {
+      title: f('entity.updatedAt'),
+      dataIndex: 'updatedAt',
+      width: 170,
+      hideInSearch: true,
+      renderText: (value) => formatDateTime(value),
+    },
+    {
+      title: f('entity.updatedBy'),
+      dataIndex: 'updatedBy',
+      width: 110,
       hideInSearch: true,
     },
     {

@@ -37,19 +37,24 @@ declare namespace SaaS {
   };
 
   type SysUser = {
-    id?: string;
+    id?: number;
     idStr?: string;
     username: string;
     nickname: string;
     mobile?: string;
     email?: string;
-    deptId?: string;
+    deptId?: number;
+    deptIdStr?: string;
     deptName?: string;
     roleIds: string[];
+    roleCodes: string[];
     roleNames: string[];
     status: string;
     lastLoginAt?: string;
     createdAt: string;
+    createdBy: string;
+    updatedAt: string;
+    updatedBy: string;
   };
 
   type UserQuery = {
@@ -75,10 +80,10 @@ declare namespace SaaS {
     status: string;
   };
 
-  type UserUpdate = UserCreate & { id: string };
+  type UserUpdate = Partial<UserCreate> & { id: string };
 
   type SysRole = {
-    id?: string;
+    id?: number;
     idStr?: string;
     name: string;
     code: string;
@@ -86,6 +91,9 @@ declare namespace SaaS {
     sort: number;
     remark?: string;
     createdAt: string;
+    createdBy: string;
+    updatedAt: string;
+    updatedBy: string;
   };
 
   type RoleQuery = {
@@ -107,7 +115,7 @@ declare namespace SaaS {
   type RoleUpdate = RoleCreate & { id: string };
 
   type SysMenu = {
-    id?: string;
+    id?: number;
     idStr?: string;
     name: string;
     menuType: string;
@@ -121,6 +129,10 @@ declare namespace SaaS {
     sort: number;
     parentId?: string;
     children?: SysMenu[];
+    createdAt: string;
+    createdBy: string;
+    updatedAt: string;
+    updatedBy: string;
   };
 
   type MenuCreate = {
@@ -136,7 +148,7 @@ declare namespace SaaS {
   type MenuUpdate = MenuCreate & { id: string };
 
   type SysDept = {
-    id?: string;
+    id?: number;
     idStr?: string;
     name: string;
     leader?: string;
@@ -145,6 +157,10 @@ declare namespace SaaS {
     sort: number;
     parentId?: string;
     children?: SysDept[];
+    createdAt: string;
+    createdBy: string;
+    updatedAt: string;
+    updatedBy: string;
   };
 
   type DeptCreate = {
@@ -159,7 +175,7 @@ declare namespace SaaS {
   type DeptUpdate = DeptCreate & { id: string };
 
   type SysTenant = {
-    id?: string;
+    id?: number;
     idStr?: string;
     name: string;
     code: string;
@@ -169,6 +185,9 @@ declare namespace SaaS {
     expiredAt?: string;
     status: string;
     createdAt: string;
+    createdBy: string;
+    updatedAt: string;
+    updatedBy: string;
   };
 
   type TenantQuery = {
@@ -180,17 +199,21 @@ declare namespace SaaS {
   };
 
   type SysPackage = {
-    id?: string;
+    id?: number;
     idStr?: string;
     name: string;
     code: string;
     status: string;
     sort?: number;
     remark?: string;
+    createdAt: string;
+    createdBy: string;
+    updatedAt: string;
+    updatedBy: string;
   };
 
   type SysApi = {
-    id?: string;
+    id?: number;
     idStr?: string;
     apiName: string;
     apiPath: string;
@@ -198,6 +221,10 @@ declare namespace SaaS {
     apiType?: string;
     status: string;
     remark?: string;
+    createdAt: string;
+    createdBy: string;
+    updatedAt: string;
+    updatedBy: string;
   };
 
   type ApiQuery = {
@@ -205,21 +232,26 @@ declare namespace SaaS {
     pageSize: number;
     apiName?: string;
     apiPath?: string;
+    apiMethod?: string;
     apiType?: string;
     status?: string;
   };
 
   type SysDict = {
-    id?: string;
+    id?: number;
     idStr?: string;
     name: string;
     key: string;
     status: string;
     remark?: string;
+    createdAt: string;
+    createdBy: string;
+    updatedAt: string;
+    updatedBy: string;
   };
 
   type SysDictData = {
-    id?: string;
+    id?: number;
     idStr?: string;
     name: string;
     key: string;
@@ -227,10 +259,14 @@ declare namespace SaaS {
     status: string;
     remark?: string;
     dictId: string;
+    createdAt: string;
+    createdBy: string;
+    updatedAt: string;
+    updatedBy: string;
   };
 
   type SysLoginLog = {
-    id?: string;
+    id?: number;
     idStr?: string;
     username: string;
     loginIp: string;
@@ -240,7 +276,7 @@ declare namespace SaaS {
   };
 
   type SysOperationLog = {
-    id?: string;
+    id?: number;
     idStr?: string;
     operatorName: string;
     module: string;

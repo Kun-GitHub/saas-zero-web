@@ -60,7 +60,7 @@
   {
     path: '/tenant',
     name: 'tenant',
-    icon: 'BuildingOutlined',
+    icon: 'ShopOutlined',
     access: 'canManageTenants',
     routes: [
       {
@@ -122,6 +122,11 @@
         component: './log/operation-log',
       },
     ],
+  },
+  {
+    path: '/account/center',
+    name: 'accountCenter',
+    component: './account/center',
   },
   {
     path: '/init',

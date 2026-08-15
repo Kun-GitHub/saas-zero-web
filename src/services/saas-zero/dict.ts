@@ -14,7 +14,7 @@ export async function updateDict(body: any) {
   });
 }
 
-export async function deleteDict(ids: number[]) {
+export async function deleteDict(ids: string[]) {
   return request<SaaS.EmptyResp>('/system/dict/delete', {
     method: 'POST',
     data: { ids },
@@ -28,7 +28,7 @@ export async function getDictList(params: any) {
   });
 }
 
-export async function getDictDetail(id: number) {
+export async function getDictDetail(id: string) {
   return request<SaaS.SysDict>('/system/dict/detail', {
     method: 'GET',
     params: { id },
@@ -49,7 +49,7 @@ export async function updateDictData(body: any) {
   });
 }
 
-export async function deleteDictData(ids: number[]) {
+export async function deleteDictData(ids: string[]) {
   return request<SaaS.EmptyResp>('/system/dictData/delete', {
     method: 'POST',
     data: { ids },
@@ -63,7 +63,7 @@ export async function getDictDataList(params: any) {
   });
 }
 
-export async function getDictDataDetail(id: number) {
+export async function getDictDataDetail(id: string) {
   return request<SaaS.SysDictData>('/system/dictData/detail', {
     method: 'GET',
     params: { id },
