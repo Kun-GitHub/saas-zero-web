@@ -64,6 +64,17 @@ const PackageList: React.FC = () => {
   const [apiTree, setApiTree] = useState<any[]>([]);
   const [checkedApiKeys, setCheckedApiKeys] = useState<React.Key[]>([]);
 
+  const [searchName, setSearchName] = useState('');
+  const [searchStatus, setSearchStatus] = useState<string | undefined>();
+
+  const filteredPackages = packages.filter(
+    (p) =>
+      (!searchName ||
+        p.name.includes(searchName) ||
+        p.code.includes(searchName)) &&
+      (!searchStatus || p.status === searchStatus),
+  );
+
   const load = async () => {
     const res = await getPackageList({ page: 1, pageSize: 100 });
     setPackages(res.list);
@@ -121,6 +132,26 @@ const PackageList: React.FC = () => {
 
   return (
     <div>
+      <div style={{ marginBottom: 16, display: 'flex', gap: 8 }}>
+        <Input.Search
+          allowClear
+          placeholder={f('pages.tenant.package.search')}
+          style={{ width: 260 }}
+          onSearch={(v) => setSearchName(v.trim())}
+        />
+        <Select
+          allowClear
+          placeholder={f('entity.status')}
+          style={{ width: 140 }}
+          value={searchStatus}
+          onChange={setSearchStatus}
+          options={[
+            { value: 'active', label: f('status.active') },
+            { value: 'inactive', label: f('status.inactive') },
+          ]}
+        />
+        <div style={{ flex: 1 }} />
+      </div>
       <div
         style={{
           marginBottom: 16,
@@ -143,7 +174,7 @@ const PackageList: React.FC = () => {
         )}
       </div>
       <Row gutter={[24, 24]}>
-        {packages.map((pkg) => (
+        {filteredPackages.map((pkg) => (
           <Col xs={24} sm={12} lg={8} key={pkg.idStr}>
             <Card>
               <Tag color="blue" style={{ marginBottom: 8 }}>

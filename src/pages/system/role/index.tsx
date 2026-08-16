@@ -235,6 +235,7 @@ const RoleList: React.FC = () => {
             page: params.current || 1,
             pageSize: params.pageSize || 10,
             name: params.name,
+            code: params.code,
             status: params.status,
           });
           return { data: res.list, success: true, total: res.total };

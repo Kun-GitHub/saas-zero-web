@@ -46,6 +46,23 @@ const cleanTree = (items: any[]): any[] =>
     return copy;
   });
 
+// 按关键字/状态过滤树：匹配节点及其祖先路径保留
+const filterTree = (items: any[], keyword?: string, status?: string): any[] =>
+  items
+    .map((item) => {
+      const match =
+        (!keyword || item.name.includes(keyword)) &&
+        (!status || item.status === status);
+      const children = item.children?.length
+        ? filterTree(item.children, keyword, status)
+        : [];
+      if (match || children.length > 0) {
+        return { ...item, children };
+      }
+      return null;
+    })
+    .filter(Boolean);
+
 const flattenTree = (
   items: any[],
   depth = 0,
@@ -141,6 +158,11 @@ const MenuList: React.FC = () => {
       title: f('entity.status'),
       dataIndex: 'status',
       width: 80,
+      valueType: 'select',
+      valueEnum: {
+        active: { text: f('status.active') },
+        inactive: { text: f('status.inactive') },
+      },
       render: (_, r) => (
         <Tag color={r.status === 'active' ? 'green' : 'red'}>
           {f(`status.${r.status}`)}
@@ -219,10 +241,11 @@ const MenuList: React.FC = () => {
         rowKey="idStr"
         actionRef={actionRef}
         columns={columns}
-        request={async () => {
+        request={async (params) => {
           const res = await getMenuTree();
           const tree = cleanTree(res);
-          return { data: tree, success: true, total: tree.length };
+          const filtered = filterTree(tree, params.name, params.status);
+          return { data: filtered, success: true, total: filtered.length };
         }}
         toolBarRender={() => [
           can('system:menu:create') && (
@@ -236,7 +259,7 @@ const MenuList: React.FC = () => {
             </Button>
           ),
         ]}
-        search={false}
+        search={{ labelWidth: 'auto' }}
         pagination={false}
       />
       <Modal

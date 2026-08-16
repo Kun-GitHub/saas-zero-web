@@ -17,7 +17,9 @@ const LoginLogList: React.FC = () => {
       title: f('entity.log.ip'),
       dataIndex: 'loginIp',
       width: 140,
-      hideInSearch: true,
+      search: {
+        transform: (value: any) => ({ ip: value }),
+      },
     },
     {
       title: f('entity.status'),
@@ -54,6 +56,8 @@ const LoginLogList: React.FC = () => {
           page: params.current || 1,
           pageSize: params.pageSize || 10,
           username: params.username,
+          status: params.status,
+          ip: params.ip,
         });
         return { data: res.list, success: true, total: res.total };
       }}

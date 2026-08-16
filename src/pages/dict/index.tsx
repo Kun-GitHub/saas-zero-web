@@ -42,11 +42,28 @@ const DictPage: React.FC = () => {
   const [editData, setEditData] = useState<any>(null);
   const [dictForm] = Form.useForm();
   const [dataForm] = Form.useForm();
+  const [dictKeyword, setDictKeyword] = useState('');
+  const [dataKeyword, setDataKeyword] = useState('');
+
+  const filteredDicts = dicts.filter(
+    (d) =>
+      !dictKeyword ||
+      d.name.includes(dictKeyword) ||
+      d.key.includes(dictKeyword),
+  );
 
   const loadDicts = async () => {
     const res = await getDictList({ page: 1, pageSize: 100 });
     setDicts(res.list);
   };
+
+  const filteredDictData = dictData.filter(
+    (d) =>
+      !dataKeyword ||
+      d.key.includes(dataKeyword) ||
+      d.value.includes(dataKeyword) ||
+      d.name.includes(dataKeyword),
+  );
 
   const loadDictData = async (dictId: string) => {
     const res = await getDictDataList({ page: 1, pageSize: 1000, dictId });
@@ -155,23 +172,31 @@ const DictPage: React.FC = () => {
         <Card
           title={f('pages.dict.title')}
           extra={
-            can('system:dict:create') ? (
-              <Button
-                type="primary"
-                size="small"
-                icon={<PlusOutlined />}
-                onClick={() => {
-                  setEditRecord(null);
-                  dictForm.resetFields();
-                  setDictModal(true);
-                }}
-              >
-                {f('pages.dict.create')}
-              </Button>
-            ) : undefined
+            <Space>
+              <Input.Search
+                allowClear
+                placeholder={f('pages.dict.search')}
+                style={{ width: 180 }}
+                onSearch={(v) => setDictKeyword(v.trim())}
+              />
+              {can('system:dict:create') && (
+                <Button
+                  type="primary"
+                  size="small"
+                  icon={<PlusOutlined />}
+                  onClick={() => {
+                    setEditRecord(null);
+                    dictForm.resetFields();
+                    setDictModal(true);
+                  }}
+                >
+                  {f('pages.dict.create')}
+                </Button>
+              )}
+            </Space>
           }
         >
-          {dicts.map((d) => (
+          {filteredDicts.map((d) => (
             <div
               key={d.idStr}
               onClick={async () => {
@@ -225,27 +250,35 @@ const DictPage: React.FC = () => {
         <Card
           title={`${f('pages.dict.title')} - ${selectedDict?.name || ''}`}
           extra={
-            can('system:dict:create') ? (
-              <Button
-                type="primary"
-                size="small"
-                icon={<PlusOutlined />}
-                disabled={!selectedDict}
-                onClick={() => {
-                  setEditData(null);
-                  dataForm.resetFields();
-                  setDataModal(true);
-                }}
-              >
-                {f('pages.dict.data.create')}
-              </Button>
-            ) : undefined
+            <Space>
+              <Input.Search
+                allowClear
+                placeholder={f('pages.dict.data.search')}
+                style={{ width: 200 }}
+                onSearch={(v) => setDataKeyword(v.trim())}
+              />
+              {can('system:dict:create') && (
+                <Button
+                  type="primary"
+                  size="small"
+                  icon={<PlusOutlined />}
+                  disabled={!selectedDict}
+                  onClick={() => {
+                    setEditData(null);
+                    dataForm.resetFields();
+                    setDataModal(true);
+                  }}
+                >
+                  {f('pages.dict.data.create')}
+                </Button>
+              )}
+            </Space>
           }
         >
           <Table
             rowKey="idStr"
             columns={dictDataColumns}
-            dataSource={dictData}
+            dataSource={filteredDictData}
             pagination={false}
           />
         </Card>

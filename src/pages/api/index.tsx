@@ -1,4 +1,8 @@
-import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
+import {
+  DeleteOutlined,
+  PlusOutlined,
+  PlusSquareOutlined,
+} from '@ant-design/icons';
 import type { ActionType, ProColumns } from '@ant-design/pro-components';
 import { ProTable } from '@ant-design/pro-components';
 import { useIntl } from '@umijs/max';
@@ -46,6 +50,29 @@ const cleanTree = (items: any[]): any[] =>
     return copy;
   });
 
+// 按名称/类型/状态过滤树：匹配节点及其祖先路径保留
+const filterTree = (
+  items: any[],
+  keyword?: string,
+  apiType?: string,
+  status?: string,
+): any[] =>
+  items
+    .map((item) => {
+      const match =
+        (!keyword || item.apiName?.includes(keyword)) &&
+        (!apiType || item.apiType === apiType) &&
+        (!status || item.status === status);
+      const children = item.children?.length
+        ? filterTree(item.children, keyword, apiType, status)
+        : [];
+      if (match || children.length > 0) {
+        return { ...item, children };
+      }
+      return null;
+    })
+    .filter(Boolean);
+
 const ApiList: React.FC = () => {
   const intl = useIntl();
   const actionRef = useRef<ActionType>(null);
@@ -57,13 +84,28 @@ const ApiList: React.FC = () => {
   const [form] = Form.useForm();
   const apiType = Form.useWatch('apiType', form);
 
+  const openCreateChildModal = async (group: any) => {
+    setEditRecord(null);
+    form.resetFields();
+    // 自动归入当前目录：预填目录 path 前缀（API 按 path 前缀分组）
+    form.setFieldsValue({
+      apiType: 'api',
+      apiPath: group.apiPath ? `${group.apiPath}/` : '',
+    });
+    setModalOpen(true);
+  };
+
   const columns: ProColumns<any>[] = [
     { title: f('entity.api.name'), dataIndex: 'apiName', width: 200 },
     {
       title: f('entity.api.type'),
       dataIndex: 'apiType',
       width: 80,
-      hideInSearch: true,
+      valueType: 'select',
+      valueEnum: {
+        group: { text: f('entity.menu.directory') },
+        api: { text: 'API' },
+      },
       render: (_, r) => (
         <Tag color={r.apiType === 'group' ? 'blue' : 'green'}>
           {r.apiType === 'group' ? f('entity.menu.directory') : 'API'}
@@ -90,6 +132,11 @@ const ApiList: React.FC = () => {
       title: f('entity.status'),
       dataIndex: 'status',
       width: 80,
+      valueType: 'select',
+      valueEnum: {
+        active: { text: f('status.active') },
+        inactive: { text: f('status.inactive') },
+      },
       render: (_, r) => (
         <Tag color={r.status === 'active' ? 'green' : 'red'}>
           {f(`status.${r.status}`)}
@@ -115,6 +162,16 @@ const ApiList: React.FC = () => {
       hideInSearch: true,
       render: (_, r) => (
         <Space>
+          {can('system:api:create') && r.apiType === 'group' && (
+            <Button
+              type="link"
+              size="small"
+              icon={<PlusSquareOutlined />}
+              onClick={() => openCreateChildModal(r)}
+            >
+              {f('pages.api.addChild')}
+            </Button>
+          )}
           {can('system:api:update') && (
             <Button
               type="link"
@@ -160,12 +217,19 @@ const ApiList: React.FC = () => {
         rowKey="idStr"
         actionRef={actionRef}
         columns={columns}
-        request={async () => {
+        request={async (params) => {
           const res = await getApiList({ page: 1, pageSize: 100 });
+          const tree = cleanTree(buildApiTree(res.list || []));
+          const filtered = filterTree(
+            tree,
+            params.apiName,
+            params.apiType,
+            params.status,
+          );
           return {
-            data: cleanTree(buildApiTree(res.list || [])),
+            data: filtered,
             success: true,
-            total: res.list?.length || 0,
+            total: filtered.length,
           };
         }}
         toolBarRender={() => [
@@ -184,7 +248,7 @@ const ApiList: React.FC = () => {
             </Button>
           ),
         ]}
-        search={false}
+        search={{ labelWidth: 'auto' }}
         pagination={false}
       />
       <Modal

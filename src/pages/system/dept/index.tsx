@@ -131,6 +131,11 @@ const DeptList: React.FC = () => {
       title: f('entity.status'),
       dataIndex: 'status',
       width: 80,
+      valueType: 'select',
+      valueEnum: {
+        active: { text: f('status.active') },
+        inactive: { text: f('status.inactive') },
+      },
       render: (_, r) => (
         <Tag color={r.status === 'active' ? 'green' : 'red'}>
           {f(`status.${r.status}`)}
@@ -228,7 +233,7 @@ const DeptList: React.FC = () => {
             </Button>
           ),
         ]}
-        search={false}
+        search={{ labelWidth: 'auto' }}
         pagination={false}
       />
       <Modal

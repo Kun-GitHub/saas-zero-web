@@ -283,6 +283,8 @@ const UserList: React.FC = () => {
             page: params.current || 1,
             pageSize: params.pageSize || 10,
             username: params.username,
+            nickname: params.nickname,
+            mobile: params.mobile,
             status: params.status,
           });
           return { data: res.list, success: true, total: res.total };
