@@ -32,6 +32,7 @@ import {
   updateRole,
 } from '@/services/saas-zero/role';
 import { formatDateTime } from '@/utils/datetime';
+import { usePermission } from '@/utils/permission';
 
 const statusColor: Record<string, string> = {
   active: 'green',
@@ -42,6 +43,7 @@ const RoleList: React.FC = () => {
   const intl = useIntl();
   const actionRef = useRef<ActionType>(null);
   const { message, modal } = App.useApp();
+  const { can } = usePermission();
   const [modalOpen, setModalOpen] = useState(false);
   const [editRecord, setEditRecord] = useState<SaaS.SysRole | null>(null);
   const [form] = Form.useForm();
@@ -106,51 +108,59 @@ const RoleList: React.FC = () => {
       hideInSearch: true,
       render: (_, r) => (
         <Space>
-          <Button
-            type="link"
-            size="small"
-            onClick={() => {
-              setEditRecord(r);
-              form.setFieldsValue(r);
-              setModalOpen(true);
-            }}
-          >
-            {f('entity.edit')}
-          </Button>
-          <Button
-            type="link"
-            size="small"
-            icon={<ApartmentOutlined />}
-            onClick={() => openMenuModal(r)}
-          >
-            {f('pages.system.role.assignMenus')}
-          </Button>
-          <Button
-            type="link"
-            size="small"
-            icon={<CodeOutlined />}
-            onClick={() => openApiModal(r)}
-          >
-            {f('pages.system.role.assignApis')}
-          </Button>
-          <Button
-            type="link"
-            size="small"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() =>
-              modal.confirm({
-                title: f('pages.system.role.deleteConfirm'),
-                onOk: async () => {
-                  await deleteRole([r.idStr!]);
-                  message.success(f('message.deleteSuccess'));
-                  actionRef.current?.reload();
-                },
-              })
-            }
-          >
-            {f('entity.delete')}
-          </Button>
+          {can('system:role:update') && (
+            <Button
+              type="link"
+              size="small"
+              onClick={() => {
+                setEditRecord(r);
+                form.setFieldsValue(r);
+                setModalOpen(true);
+              }}
+            >
+              {f('entity.edit')}
+            </Button>
+          )}
+          {can('system:role:assignMenus') && (
+            <Button
+              type="link"
+              size="small"
+              icon={<ApartmentOutlined />}
+              onClick={() => openMenuModal(r)}
+            >
+              {f('pages.system.role.assignMenus')}
+            </Button>
+          )}
+          {can('system:role:assignApis') && (
+            <Button
+              type="link"
+              size="small"
+              icon={<CodeOutlined />}
+              onClick={() => openApiModal(r)}
+            >
+              {f('pages.system.role.assignApis')}
+            </Button>
+          )}
+          {can('system:role:delete') && (
+            <Button
+              type="link"
+              size="small"
+              danger
+              icon={<DeleteOutlined />}
+              onClick={() =>
+                modal.confirm({
+                  title: f('pages.system.role.deleteConfirm'),
+                  onOk: async () => {
+                    await deleteRole([r.idStr!]);
+                    message.success(f('message.deleteSuccess'));
+                    actionRef.current?.reload();
+                  },
+                })
+              }
+            >
+              {f('entity.delete')}
+            </Button>
+          )}
         </Space>
       ),
     },
@@ -230,18 +240,20 @@ const RoleList: React.FC = () => {
           return { data: res.list, success: true, total: res.total };
         }}
         toolBarRender={() => [
-          <Button
-            key="create"
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => {
-              setEditRecord(null);
-              form.resetFields();
-              setModalOpen(true);
-            }}
-          >
-            {f('pages.system.role.create')}
-          </Button>,
+          can('system:role:create') && (
+            <Button
+              key="create"
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => {
+                setEditRecord(null);
+                form.resetFields();
+                setModalOpen(true);
+              }}
+            >
+              {f('pages.system.role.create')}
+            </Button>
+          ),
         ]}
         search={{ labelWidth: 'auto' }}
         pagination={{

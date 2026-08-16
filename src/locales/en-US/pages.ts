@@ -77,6 +77,8 @@ export default {
   'pages.tenant.package.edit': 'Edit Package',
   'pages.tenant.package.delete': 'Delete Package',
   'pages.tenant.package.deleteConfirm': 'Are you sure to delete this package?',
+  'pages.tenant.package.assignMenus': 'Assign Menus',
+  'pages.tenant.package.assignApis': 'Assign APIs',
 
   'pages.api.title': 'API Management',
   'pages.api.create': 'Create API',
@@ -187,7 +189,12 @@ export default {
   'entity.tenant.name': 'Tenant Name',
   'entity.tenant.code': 'Tenant Code',
   'entity.tenant.admin': 'Admin',
+  'entity.tenant.adminAccount': 'Admin Account',
+  'entity.tenant.adminPassword': 'Admin Password',
+  'entity.tenant.adminPlaceholder': 'Select Admin',
   'entity.tenant.package': 'Package',
+  'entity.tenant.packageRequired': 'Please select a package',
+  'entity.tenant.packagePlaceholder': 'Select a package',
   'entity.tenant.expiry': 'Expiry Date',
 
   'entity.package.name': 'Package Name',

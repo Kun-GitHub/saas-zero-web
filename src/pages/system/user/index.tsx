@@ -30,6 +30,7 @@ import {
   updateUser,
 } from '@/services/saas-zero/user';
 import { formatDateTime } from '@/utils/datetime';
+import { usePermission } from '@/utils/permission';
 
 const statusColor: Record<string, string> = {
   active: 'green',
@@ -42,6 +43,7 @@ const UserList: React.FC = () => {
   const intl = useIntl();
   const actionRef = useRef<ActionType>(null);
   const { message, modal } = App.useApp();
+  const { can } = usePermission();
   const [modalOpen, setModalOpen] = useState(false);
   const [editRecord, setEditRecord] = useState<SaaS.SysUser | null>(null);
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
@@ -131,47 +133,55 @@ const UserList: React.FC = () => {
       hideInSearch: true,
       render: (_, record) => (
         <Space size={0}>
-          <Button
-            type="link"
-            size="small"
-            onClick={() => openEditModal(record)}
-          >
-            {f('entity.edit')}
-          </Button>
-          <Button
-            type="link"
-            size="small"
-            icon={<KeyOutlined />}
-            onClick={() => openPwdModal(record)}
-          >
-            {f('pages.system.user.resetPassword')}
-          </Button>
-          <Button
-            type="link"
-            size="small"
-            icon={<TeamOutlined />}
-            onClick={() => openRoleModal(record)}
-          >
-            {f('pages.system.user.assignRoles')}
-          </Button>
-          <Button
-            type="link"
-            size="small"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => {
-              modal.confirm({
-                title: f('pages.system.user.deleteConfirm'),
-                onOk: async () => {
-                  await deleteUser([record.idStr!]);
-                  message.success(f('message.deleteSuccess'));
-                  actionRef.current?.reload();
-                },
-              });
-            }}
-          >
-            {f('entity.delete')}
-          </Button>
+          {can('system:user:update') && (
+            <Button
+              type="link"
+              size="small"
+              onClick={() => openEditModal(record)}
+            >
+              {f('entity.edit')}
+            </Button>
+          )}
+          {can('system:user:resetPassword') && (
+            <Button
+              type="link"
+              size="small"
+              icon={<KeyOutlined />}
+              onClick={() => openPwdModal(record)}
+            >
+              {f('pages.system.user.resetPassword')}
+            </Button>
+          )}
+          {can('system:user:assignRoles') && (
+            <Button
+              type="link"
+              size="small"
+              icon={<TeamOutlined />}
+              onClick={() => openRoleModal(record)}
+            >
+              {f('pages.system.user.assignRoles')}
+            </Button>
+          )}
+          {can('system:user:delete') && (
+            <Button
+              type="link"
+              size="small"
+              danger
+              icon={<DeleteOutlined />}
+              onClick={() => {
+                modal.confirm({
+                  title: f('pages.system.user.deleteConfirm'),
+                  onOk: async () => {
+                    await deleteUser([record.idStr!]);
+                    message.success(f('message.deleteSuccess'));
+                    actionRef.current?.reload();
+                  },
+                });
+              }}
+            >
+              {f('entity.delete')}
+            </Button>
+          )}
         </Space>
       ),
     },
@@ -280,7 +290,7 @@ const UserList: React.FC = () => {
         rowSelection={{ selectedRowKeys, onChange: setSelectedRowKeys }}
         scroll={{ x: 1450 }}
         toolBarRender={() => [
-          selectedRowKeys.length > 0 && (
+          can('system:user:delete') && selectedRowKeys.length > 0 && (
             <Button
               key="batchDelete"
               danger
@@ -290,14 +300,16 @@ const UserList: React.FC = () => {
               {f('pages.system.user.batchDelete')}
             </Button>
           ),
-          <Button
-            key="create"
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={openCreateModal}
-          >
-            {f('pages.system.user.create')}
-          </Button>,
+          can('system:user:create') && (
+            <Button
+              key="create"
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={openCreateModal}
+            >
+              {f('pages.system.user.create')}
+            </Button>
+          ),
         ]}
         search={{ labelWidth: 'auto' }}
         pagination={{

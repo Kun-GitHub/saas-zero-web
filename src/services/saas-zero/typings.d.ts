@@ -200,6 +200,28 @@ declare namespace SaaS {
     status?: string;
   };
 
+  type TenantCreate = {
+    name: string;
+    code: string;
+    packageId: string;
+    username: string;
+    password: string;
+    expiredAt?: string;
+    status: string;
+    remark?: string;
+  };
+
+  type TenantUpdate = {
+    id: string;
+    name?: string;
+    code?: string;
+    packageId?: string;
+    adminId?: string;
+    expiredAt?: string;
+    status?: string;
+    remark?: string;
+  };
+
   type SysPackage = {
     id?: number;
     idStr?: string;
@@ -208,6 +230,8 @@ declare namespace SaaS {
     status: string;
     sort?: number;
     remark?: string;
+    menuIds?: string[];
+    apiIds?: string[];
     createdAt: string;
     createdBy: string;
     updatedAt: string;

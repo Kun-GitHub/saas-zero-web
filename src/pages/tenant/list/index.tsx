@@ -1,17 +1,31 @@
-import { DeleteOutlined, PlusOutlined, SwapOutlined } from '@ant-design/icons';
+import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns } from '@ant-design/pro-components';
 import { ProTable } from '@ant-design/pro-components';
 import { useIntl } from '@umijs/max';
-import { App, Button, Form, Input, Modal, Select, Space, Tag } from 'antd';
-import React, { useRef, useState } from 'react';
 import {
-  changeTenantStatus,
+  App,
+  Button,
+  DatePicker,
+  Form,
+  Input,
+  Modal,
+  Select,
+  Space,
+  Tag,
+} from 'antd';
+import dayjs from 'dayjs';
+import React, { useRef, useState } from 'react';
+import { getPackageList } from '@/services/saas-zero/package';
+import {
   createTenant,
   deleteTenant,
+  getTenantDetail,
   getTenantList,
+  getTenantUsers,
   updateTenant,
 } from '@/services/saas-zero/tenant';
 import { formatDateTime } from '@/utils/datetime';
+import { usePermission } from '@/utils/permission';
 
 const statusColor: Record<string, string> = {
   active: 'green',
@@ -23,9 +37,45 @@ const TenantList: React.FC = () => {
   const intl = useIntl();
   const actionRef = useRef<ActionType>(null);
   const { message, modal } = App.useApp();
+  const { can } = usePermission();
   const [modalOpen, setModalOpen] = useState(false);
   const [editRecord, setEditRecord] = useState<any>(null);
   const [form] = Form.useForm();
+  const [packageList, setPackageList] = useState<SaaS.SysPackage[]>([]);
+  const [tenantUsers, setTenantUsers] = useState<
+    { idStr: string; username: string; nickname: string }[]
+  >([]);
+
+  const loadPackages = async () => {
+    const res = await getPackageList({ page: 1, pageSize: 100 }).catch(() => ({
+      list: [],
+    }));
+    setPackageList(res.list || []);
+  };
+
+  const openCreateModal = async () => {
+    setEditRecord(null);
+    form.resetFields();
+    await loadPackages();
+    setModalOpen(true);
+  };
+
+  const openEditModal = async (record: any) => {
+    setEditRecord(record);
+    form.resetFields();
+    await loadPackages();
+    const users = await getTenantUsers(record.idStr).catch(() => ({
+      list: [],
+    }));
+    setTenantUsers(users.list || []);
+    form.setFieldsValue({
+      ...record,
+      packageId: record.packageIdStr || undefined,
+      adminId: record.adminIdStr || undefined,
+      expiredAt: record.expiredAt ? dayjs(record.expiredAt) : undefined,
+    });
+    setModalOpen(true);
+  };
 
   const f = (id: string) => intl.formatMessage({ id });
 
@@ -34,7 +84,7 @@ const TenantList: React.FC = () => {
     { title: f('entity.tenant.code'), dataIndex: 'code', width: 120 },
     {
       title: f('entity.tenant.admin'),
-      dataIndex: 'adminId',
+      dataIndex: 'adminName',
       width: 100,
       hideInSearch: true,
     },
@@ -84,50 +134,31 @@ const TenantList: React.FC = () => {
       hideInSearch: true,
       render: (_, r) => (
         <Space>
-          <Button
-            type="link"
-            size="small"
-            onClick={() => {
-              setEditRecord(r);
-              form.setFieldsValue(r);
-              setModalOpen(true);
-            }}
-          >
-            {f('entity.edit')}
-          </Button>
-          <Button
-            type="link"
-            size="small"
-            icon={<SwapOutlined />}
-            onClick={async () => {
-              await changeTenantStatus({
-                id: r.idStr,
-                status: r.status === 'active' ? 'frozen' : 'active',
-              });
-              message.success(f('message.operationSuccess'));
-              actionRef.current?.reload();
-            }}
-          >
-            {f('entity.status')}
-          </Button>
-          <Button
-            type="link"
-            size="small"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() =>
-              modal.confirm({
-                title: f('pages.tenant.list.deleteConfirm'),
-                onOk: async () => {
-                  await deleteTenant([r.idStr]);
-                  message.success(f('message.deleteSuccess'));
-                  actionRef.current?.reload();
-                },
-              })
-            }
-          >
-            {f('entity.delete')}
-          </Button>
+          {can('system:tenant:update') && (
+            <Button type="link" size="small" onClick={() => openEditModal(r)}>
+              {f('entity.edit')}
+            </Button>
+          )}
+          {can('system:tenant:delete') && (
+            <Button
+              type="link"
+              size="small"
+              danger
+              icon={<DeleteOutlined />}
+              onClick={() =>
+                modal.confirm({
+                  title: f('pages.tenant.list.deleteConfirm'),
+                  onOk: async () => {
+                    await deleteTenant([r.idStr]);
+                    message.success(f('message.deleteSuccess'));
+                    actionRef.current?.reload();
+                  },
+                })
+              }
+            >
+              {f('entity.delete')}
+            </Button>
+          )}
         </Space>
       ),
     },
@@ -149,18 +180,16 @@ const TenantList: React.FC = () => {
           return { data: res.list, success: true, total: res.total };
         }}
         toolBarRender={() => [
-          <Button
-            key="create"
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => {
-              setEditRecord(null);
-              form.resetFields();
-              setModalOpen(true);
-            }}
-          >
-            {f('pages.tenant.list.create')}
-          </Button>,
+          can('system:tenant:create') && (
+            <Button
+              key="create"
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={openCreateModal}
+            >
+              {f('pages.tenant.list.create')}
+            </Button>
+          ),
         ]}
         search={{ labelWidth: 'auto' }}
         pagination={{
@@ -177,10 +206,16 @@ const TenantList: React.FC = () => {
         open={modalOpen}
         onOk={async () => {
           const values = await form.validateFields();
+          const body = {
+            ...values,
+            expiredAt: values.expiredAt
+              ? values.expiredAt.format('YYYY-MM-DD')
+              : undefined,
+          };
           if (editRecord) {
-            await updateTenant({ ...values, id: editRecord.idStr });
+            await updateTenant({ ...body, id: editRecord.idStr });
           } else {
-            await createTenant(values);
+            await createTenant(body);
           }
           message.success(
             f('message.' + (editRecord ? 'updateSuccess' : 'createSuccess')),
@@ -205,11 +240,53 @@ const TenantList: React.FC = () => {
           >
             <Input />
           </Form.Item>
-          <Form.Item name="adminId" label={f('entity.tenant.admin')}>
-            <Input placeholder="User ID" />
+          <Form.Item
+            name="packageId"
+            label={f('entity.tenant.package')}
+            rules={[
+              { required: true, message: f('entity.tenant.packageRequired') },
+            ]}
+          >
+            <Select
+              placeholder={f('entity.tenant.packagePlaceholder')}
+              options={packageList.map((p) => ({
+                value: p.idStr!,
+                label: p.name,
+              }))}
+            />
           </Form.Item>
+          {!editRecord && (
+            <>
+              <Form.Item
+                name="username"
+                label={f('entity.tenant.adminAccount')}
+                rules={[{ required: true }]}
+              >
+                <Input />
+              </Form.Item>
+              <Form.Item
+                name="password"
+                label={f('entity.tenant.adminPassword')}
+                rules={[{ required: true }]}
+              >
+                <Input.Password autoComplete="new-password" />
+              </Form.Item>
+            </>
+          )}
+          {editRecord && (
+            <Form.Item name="adminId" label={f('entity.tenant.admin')}>
+              <Select
+                allowClear
+                placeholder={f('entity.tenant.adminPlaceholder')}
+                options={tenantUsers.map((u) => ({
+                  value: u.idStr,
+                  label: `${u.nickname || u.username} (${u.username})`,
+                }))}
+              />
+            </Form.Item>
+          )}
           <Form.Item name="expiredAt" label={f('entity.tenant.expiry')}>
-            <Input placeholder="2099-12-31" />
+            <DatePicker style={{ width: '100%' }} />
           </Form.Item>
           <Form.Item
             name="status"

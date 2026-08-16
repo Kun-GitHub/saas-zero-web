@@ -21,6 +21,7 @@ import {
   updateDept,
 } from '@/services/saas-zero/dept';
 import { formatDateTime } from '@/utils/datetime';
+import { usePermission } from '@/utils/permission';
 
 const flattenTree = (
   items: any[],
@@ -56,6 +57,7 @@ const DeptList: React.FC = () => {
   const intl = useIntl();
   const actionRef = useRef<ActionType>(null);
   const { message, modal } = App.useApp();
+  const { can } = usePermission();
   const [modalOpen, setModalOpen] = useState(false);
   const [editRecord, setEditRecord] = useState<any>(null);
   const [form] = Form.useForm();
@@ -160,35 +162,41 @@ const DeptList: React.FC = () => {
       hideInSearch: true,
       render: (_, r) => (
         <Space>
-          <Button type="link" size="small" onClick={() => openEditModal(r)}>
-            {f('entity.edit')}
-          </Button>
-          <Button
-            type="link"
-            size="small"
-            icon={<PlusOutlined />}
-            onClick={() => openAddChildModal(r)}
-          >
-            {f('pages.system.dept.addChild')}
-          </Button>
-          <Button
-            type="link"
-            size="small"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() =>
-              modal.confirm({
-                title: f('pages.system.dept.deleteConfirm'),
-                onOk: async () => {
-                  await deleteDept([r.idStr]);
-                  message.success(f('message.deleteSuccess'));
-                  actionRef.current?.reload();
-                },
-              })
-            }
-          >
-            {f('entity.delete')}
-          </Button>
+          {can('system:dept:update') && (
+            <Button type="link" size="small" onClick={() => openEditModal(r)}>
+              {f('entity.edit')}
+            </Button>
+          )}
+          {can('system:dept:create') && (
+            <Button
+              type="link"
+              size="small"
+              icon={<PlusOutlined />}
+              onClick={() => openAddChildModal(r)}
+            >
+              {f('pages.system.dept.addChild')}
+            </Button>
+          )}
+          {can('system:dept:delete') && (
+            <Button
+              type="link"
+              size="small"
+              danger
+              icon={<DeleteOutlined />}
+              onClick={() =>
+                modal.confirm({
+                  title: f('pages.system.dept.deleteConfirm'),
+                  onOk: async () => {
+                    await deleteDept([r.idStr]);
+                    message.success(f('message.deleteSuccess'));
+                    actionRef.current?.reload();
+                  },
+                })
+              }
+            >
+              {f('entity.delete')}
+            </Button>
+          )}
         </Space>
       ),
     },
@@ -209,14 +217,16 @@ const DeptList: React.FC = () => {
           };
         }}
         toolBarRender={() => [
-          <Button
-            key="create"
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={openCreateModal}
-          >
-            {f('pages.system.dept.create')}
-          </Button>,
+          can('system:dept:create') && (
+            <Button
+              key="create"
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={openCreateModal}
+            >
+              {f('pages.system.dept.create')}
+            </Button>
+          ),
         ]}
         search={false}
         pagination={false}

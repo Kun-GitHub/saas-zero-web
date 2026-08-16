@@ -34,3 +34,17 @@ export async function getPackageDetail(id: string) {
     params: { id },
   });
 }
+
+export async function assignPackageMenus(body: SaaS.RoleAssignMenus) {
+  return request<SaaS.EmptyResp>('/system/package/assignMenus', {
+    method: 'POST',
+    data: body,
+  });
+}
+
+export async function assignPackageApis(body: SaaS.RoleAssignApis) {
+  return request<SaaS.EmptyResp>('/system/package/assignApis', {
+    method: 'POST',
+    data: body,
+  });
+}

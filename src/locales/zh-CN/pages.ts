@@ -76,6 +76,8 @@ export default {
   'pages.tenant.package.edit': '编辑套餐',
   'pages.tenant.package.delete': '删除套餐',
   'pages.tenant.package.deleteConfirm': '确定要删除该套餐吗？',
+  'pages.tenant.package.assignMenus': '分配菜单',
+  'pages.tenant.package.assignApis': '分配API',
 
   'pages.api.title': 'API管理',
   'pages.api.create': '新增API',
@@ -186,7 +188,12 @@ export default {
   'entity.tenant.name': '租户名称',
   'entity.tenant.code': '租户编码',
   'entity.tenant.admin': '管理员',
+  'entity.tenant.adminAccount': '管理员账号',
+  'entity.tenant.adminPassword': '管理员密码',
+  'entity.tenant.adminPlaceholder': '选择管理员',
   'entity.tenant.package': '套餐',
+  'entity.tenant.packageRequired': '请选择套餐',
+  'entity.tenant.packagePlaceholder': '请选择套餐',
   'entity.tenant.expiry': '到期时间',
 
   'entity.package.name': '套餐名称',

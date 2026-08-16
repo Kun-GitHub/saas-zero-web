@@ -41,3 +41,13 @@ export async function changeTenantStatus(body: any) {
     data: body,
   });
 }
+
+export async function getTenantUsers(tenantId: string) {
+  return request<{ list: { idStr: string; username: string; nickname: string }[] }>(
+    '/system/tenant/users',
+    {
+      method: 'GET',
+      params: { id: tenantId },
+    },
+  );
+}

@@ -26,6 +26,7 @@ import {
   updateMenu,
 } from '@/services/saas-zero/menu';
 import { formatDateTime } from '@/utils/datetime';
+import { usePermission } from '@/utils/permission';
 
 const typeColor: Record<string, string> = {
   directory: 'blue',
@@ -68,6 +69,7 @@ const MenuList: React.FC = () => {
   const intl = useIntl();
   const actionRef = useRef<ActionType>(null);
   const { message, modal } = App.useApp();
+  const { can } = usePermission();
   const [modalOpen, setModalOpen] = useState(false);
   const [editRecord, setEditRecord] = useState<any>(null);
   const [form] = Form.useForm();
@@ -170,37 +172,42 @@ const MenuList: React.FC = () => {
       hideInSearch: true,
       render: (_, r) => (
         <Space>
-          {(r.menuType === 'directory' || r.menuType === 'menu') && (
+          {can('system:menu:create') &&
+            (r.menuType === 'directory' || r.menuType === 'menu') && (
+              <Button
+                type="link"
+                size="small"
+                icon={<PlusSquareOutlined />}
+                onClick={() => openCreateModal(r)}
+              >
+                {f('pages.system.menu.addChild')}
+              </Button>
+            )}
+          {can('system:menu:update') && (
+            <Button type="link" size="small" onClick={() => openEditModal(r)}>
+              {f('entity.edit')}
+            </Button>
+          )}
+          {can('system:menu:delete') && (
             <Button
               type="link"
               size="small"
-              icon={<PlusSquareOutlined />}
-              onClick={() => openCreateModal(r)}
+              danger
+              icon={<DeleteOutlined />}
+              onClick={() =>
+                modal.confirm({
+                  title: f('pages.system.menu.deleteConfirm'),
+                  onOk: async () => {
+                    await deleteMenu([r.idStr]);
+                    message.success(f('message.deleteSuccess'));
+                    actionRef.current?.reload();
+                  },
+                })
+              }
             >
-              {f('pages.system.menu.addChild')}
+              {f('entity.delete')}
             </Button>
           )}
-          <Button type="link" size="small" onClick={() => openEditModal(r)}>
-            {f('entity.edit')}
-          </Button>
-          <Button
-            type="link"
-            size="small"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() =>
-              modal.confirm({
-                title: f('pages.system.menu.deleteConfirm'),
-                onOk: async () => {
-                  await deleteMenu([r.idStr]);
-                  message.success(f('message.deleteSuccess'));
-                  actionRef.current?.reload();
-                },
-              })
-            }
-          >
-            {f('entity.delete')}
-          </Button>
         </Space>
       ),
     },
@@ -218,14 +225,16 @@ const MenuList: React.FC = () => {
           return { data: tree, success: true, total: tree.length };
         }}
         toolBarRender={() => [
-          <Button
-            key="create"
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={openCreateModal}
-          >
-            {f('pages.system.menu.create')}
-          </Button>,
+          can('system:menu:create') && (
+            <Button
+              key="create"
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={openCreateModal}
+            >
+              {f('pages.system.menu.create')}
+            </Button>
+          ),
         ]}
         search={false}
         pagination={false}

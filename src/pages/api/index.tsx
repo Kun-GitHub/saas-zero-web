@@ -11,6 +11,7 @@ import {
   updateApi,
 } from '@/services/saas-zero/api';
 import { formatDateTime } from '@/utils/datetime';
+import { usePermission } from '@/utils/permission';
 
 const methodColor: Record<string, string> = {
   POST: 'green',
@@ -49,6 +50,7 @@ const ApiList: React.FC = () => {
   const intl = useIntl();
   const actionRef = useRef<ActionType>(null);
   const { message, modal } = App.useApp();
+  const { can } = usePermission();
   const f = (id: string) => intl.formatMessage({ id });
   const [modalOpen, setModalOpen] = useState(false);
   const [editRecord, setEditRecord] = useState<any>(null);
@@ -113,36 +115,40 @@ const ApiList: React.FC = () => {
       hideInSearch: true,
       render: (_, r) => (
         <Space>
-          <Button
-            type="link"
-            size="small"
-            onClick={() => {
-              setEditRecord(r);
-              form.resetFields();
-              form.setFieldsValue(r);
-              setModalOpen(true);
-            }}
-          >
-            {f('entity.edit')}
-          </Button>
-          <Button
-            type="link"
-            size="small"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() =>
-              modal.confirm({
-                title: f('pages.api.deleteConfirm'),
-                onOk: async () => {
-                  await deleteApi([r.idStr]);
-                  message.success(f('message.deleteSuccess'));
-                  actionRef.current?.reload();
-                },
-              })
-            }
-          >
-            {f('entity.delete')}
-          </Button>
+          {can('system:api:update') && (
+            <Button
+              type="link"
+              size="small"
+              onClick={() => {
+                setEditRecord(r);
+                form.resetFields();
+                form.setFieldsValue(r);
+                setModalOpen(true);
+              }}
+            >
+              {f('entity.edit')}
+            </Button>
+          )}
+          {can('system:api:delete') && (
+            <Button
+              type="link"
+              size="small"
+              danger
+              icon={<DeleteOutlined />}
+              onClick={() =>
+                modal.confirm({
+                  title: f('pages.api.deleteConfirm'),
+                  onOk: async () => {
+                    await deleteApi([r.idStr]);
+                    message.success(f('message.deleteSuccess'));
+                    actionRef.current?.reload();
+                  },
+                })
+              }
+            >
+              {f('entity.delete')}
+            </Button>
+          )}
         </Space>
       ),
     },
@@ -163,18 +169,20 @@ const ApiList: React.FC = () => {
           };
         }}
         toolBarRender={() => [
-          <Button
-            key="create"
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => {
-              setEditRecord(null);
-              form.resetFields();
-              setModalOpen(true);
-            }}
-          >
-            {f('pages.api.create')}
-          </Button>,
+          can('system:api:create') && (
+            <Button
+              key="create"
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => {
+                setEditRecord(null);
+                form.resetFields();
+                setModalOpen(true);
+              }}
+            >
+              {f('pages.api.create')}
+            </Button>
+          ),
         ]}
         search={false}
         pagination={false}

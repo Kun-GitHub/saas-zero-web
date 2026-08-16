@@ -26,10 +26,12 @@ import {
   updateDictData,
 } from '@/services/saas-zero/dict';
 import { formatDateTime } from '@/utils/datetime';
+import { usePermission } from '@/utils/permission';
 
 const DictPage: React.FC = () => {
   const intl = useIntl();
   const { message, modal } = App.useApp();
+  const { can } = usePermission();
   const f = (id: string) => intl.formatMessage({ id });
   const [dicts, setDicts] = useState<SaaS.SysDict[]>([]);
   const [selectedDict, setSelectedDict] = useState<SaaS.SysDict | null>(null);
@@ -109,35 +111,39 @@ const DictPage: React.FC = () => {
       key: 'action',
       render: (_: any, r: any) => (
         <Space>
-          <Button
-            type="link"
-            size="small"
-            onClick={() => {
-              setEditData(r);
-              dataForm.setFieldsValue(r);
-              setDataModal(true);
-            }}
-          >
-            {f('entity.edit')}
-          </Button>
-          <Button
-            type="link"
-            size="small"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() =>
-              modal.confirm({
-                title: f('pages.dict.deleteConfirm'),
-                onOk: async () => {
-                  await deleteDictData([r.idStr]);
-                  message.success(f('message.deleteSuccess'));
-                  loadDictData(selectedDict!.idStr!);
-                },
-              })
-            }
-          >
-            {f('entity.delete')}
-          </Button>
+          {can('system:dict:update') && (
+            <Button
+              type="link"
+              size="small"
+              onClick={() => {
+                setEditData(r);
+                dataForm.setFieldsValue(r);
+                setDataModal(true);
+              }}
+            >
+              {f('entity.edit')}
+            </Button>
+          )}
+          {can('system:dict:delete') && (
+            <Button
+              type="link"
+              size="small"
+              danger
+              icon={<DeleteOutlined />}
+              onClick={() =>
+                modal.confirm({
+                  title: f('pages.dict.deleteConfirm'),
+                  onOk: async () => {
+                    await deleteDictData([r.idStr]);
+                    message.success(f('message.deleteSuccess'));
+                    loadDictData(selectedDict!.idStr!);
+                  },
+                })
+              }
+            >
+              {f('entity.delete')}
+            </Button>
+          )}
         </Space>
       ),
     },
@@ -149,18 +155,20 @@ const DictPage: React.FC = () => {
         <Card
           title={f('pages.dict.title')}
           extra={
-            <Button
-              type="primary"
-              size="small"
-              icon={<PlusOutlined />}
-              onClick={() => {
-                setEditRecord(null);
-                dictForm.resetFields();
-                setDictModal(true);
-              }}
-            >
-              {f('pages.dict.create')}
-            </Button>
+            can('system:dict:create') ? (
+              <Button
+                type="primary"
+                size="small"
+                icon={<PlusOutlined />}
+                onClick={() => {
+                  setEditRecord(null);
+                  dictForm.resetFields();
+                  setDictModal(true);
+                }}
+              >
+                {f('pages.dict.create')}
+              </Button>
+            ) : undefined
           }
         >
           {dicts.map((d) => (
@@ -191,19 +199,23 @@ const DictPage: React.FC = () => {
                 </div>
               </div>
               <Space size={4} onClick={(e) => e.stopPropagation()}>
-                <Button
-                  type="text"
-                  size="small"
-                  icon={<EditOutlined />}
-                  onClick={(e) => openEditDict(d, e)}
-                />
-                <Button
-                  type="text"
-                  size="small"
-                  danger
-                  icon={<DeleteOutlined />}
-                  onClick={(e) => handleDeleteDict(d, e)}
-                />
+                {can('system:dict:update') && (
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<EditOutlined />}
+                    onClick={(e) => openEditDict(d, e)}
+                  />
+                )}
+                {can('system:dict:delete') && (
+                  <Button
+                    type="text"
+                    size="small"
+                    danger
+                    icon={<DeleteOutlined />}
+                    onClick={(e) => handleDeleteDict(d, e)}
+                  />
+                )}
               </Space>
             </div>
           ))}
@@ -213,19 +225,21 @@ const DictPage: React.FC = () => {
         <Card
           title={`${f('pages.dict.title')} - ${selectedDict?.name || ''}`}
           extra={
-            <Button
-              type="primary"
-              size="small"
-              icon={<PlusOutlined />}
-              disabled={!selectedDict}
-              onClick={() => {
-                setEditData(null);
-                dataForm.resetFields();
-                setDataModal(true);
-              }}
-            >
-              {f('pages.dict.data.create')}
-            </Button>
+            can('system:dict:create') ? (
+              <Button
+                type="primary"
+                size="small"
+                icon={<PlusOutlined />}
+                disabled={!selectedDict}
+                onClick={() => {
+                  setEditData(null);
+                  dataForm.resetFields();
+                  setDataModal(true);
+                }}
+              >
+                {f('pages.dict.data.create')}
+              </Button>
+            ) : undefined
           }
         >
           <Table
