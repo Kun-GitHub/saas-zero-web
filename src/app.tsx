@@ -4,7 +4,7 @@ import type { Settings as LayoutSettings } from '@ant-design/pro-components';
 import { SettingDrawer } from '@ant-design/pro-components';
 import type { RequestConfig, RunTimeLayoutConfig } from '@umijs/max';
 import { history, useIntl } from '@umijs/max';
-import { Dropdown, message as antdMessage } from 'antd';
+import { message as antdMessage, Dropdown } from 'antd';
 import React from 'react';
 import { SelectLang } from '@/components';
 import PageTabs from '@/components/PageTabs';
@@ -57,19 +57,10 @@ export async function getInitialState(): Promise<{
             .filter((m: any) => m.menuType !== 'button')
             .map((m: any) => apiMenuToLayout(m))
         : [];
-    const menuData = [
-      ...baseMenuData,
-      {
-        key: '/account/center',
-        name: 'accountCenter',
-        path: '/account/center',
-        icon: <UserOutlined />,
-      },
-    ];
     return {
       fetchUserInfo,
       currentUser,
-      menuData,
+      menuData: baseMenuData,
       settings: defaultSettings as Partial<LayoutSettings>,
     };
   }
@@ -116,7 +107,8 @@ const AvatarDropdown: React.FC<{ children: React.ReactNode }> = ({
             key: 'changePassword',
             icon: <KeyOutlined />,
             label: f('app.changePassword'),
-            onClick: () => history.push('/account/center'),
+            onClick: () =>
+              history.push('/account/center?action=changePassword'),
           },
           { type: 'divider' as const },
           {
@@ -226,9 +218,20 @@ export const request: RequestConfig = {
     (response: any) => {
       console.log('[API] ←', response);
       // Axios response: { data: body, status, ... }; body = { code, msg, data }
-      const body = response?.data;
+      let body = response?.data;
+      // 兼容后端以 text/plain 返回的 JSON 字符串（旧 http.Error 场景）：
+      // 统一解析为对象，确保 code 字段能被识别并触发自动登出。
+      if (typeof body === 'string' && body.trim().startsWith('{')) {
+        try {
+          body = JSON.parse(body);
+          response = { ...response, data: body };
+        } catch {
+          // 非 JSON 字符串，保持原样
+        }
+      }
       if (body && body.code !== undefined) {
         if (body.code !== 200) {
+          // token 失效/过期/版本不匹配（401 / 1004）：清除本地 token 并跳转登录页
           if (body.code === 1004 || body.code === 401) {
             console.log('[API] token expired, logging out');
             sessionStorage.removeItem('saas-zero-token');

@@ -59,6 +59,8 @@ export default {
 
   'pages.system.dept.title': '部门管理',
   'pages.system.dept.create': '新增部门',
+  'pages.system.dept.createChild': '新增下级部门',
+  'pages.system.dept.addChild': '添加下级',
   'pages.system.dept.edit': '编辑部门',
   'pages.system.dept.delete': '删除部门',
   'pages.system.dept.deleteConfirm': '确定要删除该部门吗？',
@@ -199,6 +201,7 @@ export default {
   'entity.log.ip': '登录IP',
   'entity.log.message': '消息',
   'entity.log.time': '登录时间',
+  'entity.log.operationTime': '操作时间',
   'entity.log.operator': '操作人',
   'entity.log.module': '模块',
   'entity.log.action': '操作',

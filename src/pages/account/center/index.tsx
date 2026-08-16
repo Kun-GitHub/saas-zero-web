@@ -3,7 +3,7 @@ import {
   SafetyCertificateOutlined,
   UserOutlined,
 } from '@ant-design/icons';
-import { useIntl, useModel } from '@umijs/max';
+import { useIntl, useLocation, useModel } from '@umijs/max';
 import {
   App,
   Button,
@@ -17,7 +17,7 @@ import {
   Tag,
 } from 'antd';
 import { createStyles } from 'antd-style';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { changePassword } from '@/services/saas-zero/auth';
 import { updateUser } from '@/services/saas-zero/user';
 
@@ -57,6 +57,7 @@ const AccountCenter: React.FC = () => {
   const { message } = App.useApp();
   const { initialState, setInitialState } = useModel('@@initialState');
   const currentUser = initialState?.currentUser;
+  const location = useLocation();
 
   // Edit profile
   const [editOpen, setEditOpen] = useState(false);
@@ -67,6 +68,15 @@ const AccountCenter: React.FC = () => {
   const [pwdOpen, setPwdOpen] = useState(false);
   const [pwdForm] = Form.useForm();
   const [pwdLoading, setPwdLoading] = useState(false);
+
+  // 从头像下拉菜单「修改密码」进入时（/account/center?action=changePassword）自动弹出弹窗
+  useEffect(() => {
+    // Umi 运行时 location.query 已解析为对象，但类型声明未包含，这里用断言
+    const action = (location as any).query?.action;
+    if (action === 'changePassword') {
+      setPwdOpen(true);
+    }
+  }, [(location as any).query?.action]);
 
   const handleEditProfile = async () => {
     try {

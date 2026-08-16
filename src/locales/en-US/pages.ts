@@ -60,6 +60,8 @@ export default {
 
   'pages.system.dept.title': 'Department Management',
   'pages.system.dept.create': 'Create Department',
+  'pages.system.dept.createChild': 'Create Child Department',
+  'pages.system.dept.addChild': 'Add Child',
   'pages.system.dept.edit': 'Edit Department',
   'pages.system.dept.delete': 'Delete Department',
   'pages.system.dept.deleteConfirm': 'Are you sure to delete this department?',
@@ -200,6 +202,7 @@ export default {
   'entity.log.ip': 'IP Address',
   'entity.log.message': 'Message',
   'entity.log.time': 'Login Time',
+  'entity.log.operationTime': 'Operation Time',
   'entity.log.operator': 'Operator',
   'entity.log.module': 'Module',
   'entity.log.action': 'Action',

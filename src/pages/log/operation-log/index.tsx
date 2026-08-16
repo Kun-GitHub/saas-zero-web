@@ -38,7 +38,7 @@ const OperationLogList: React.FC = () => {
       hideInSearch: true,
     },
     {
-      title: f('entity.log.time'),
+      title: f('entity.log.operationTime'),
       dataIndex: 'createdAt',
       width: 170,
       hideInSearch: true,

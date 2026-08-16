@@ -10,7 +10,6 @@ import { useIntl } from '@umijs/max';
 import {
   App,
   Button,
-  Checkbox,
   Form,
   Input,
   InputNumber,
@@ -28,6 +27,7 @@ import {
   assignRoleMenus,
   createRole,
   deleteRole,
+  getRoleDetail,
   getRoleList,
   updateRole,
 } from '@/services/saas-zero/role';
@@ -53,7 +53,7 @@ const RoleList: React.FC = () => {
 
   const [apiModalOpen, setApiModalOpen] = useState(false);
   const [apiRole, setApiRole] = useState<SaaS.SysRole | null>(null);
-  const [apiList, setApiList] = useState<SaaS.SysApi[]>([]);
+  const [apiTree, setApiTree] = useState<any[]>([]);
   const [checkedApiIds, setCheckedApiIds] = useState<React.Key[]>([]);
 
   const f = (id: string) => intl.formatMessage({ id });
@@ -156,16 +156,17 @@ const RoleList: React.FC = () => {
     },
   ];
 
-  const openMenuModal = (r: SaaS.SysRole) => {
+  const openMenuModal = async (r: SaaS.SysRole) => {
     setMenuRole(r);
     setCheckedMenuKeys([]);
-    loadMenuTree();
+    const [detail, tree] = await Promise.all([
+      getRoleDetail(r.idStr!).catch(() => undefined),
+      getMenuTree().catch(() => []),
+    ]);
+    setMenuTree(tree || []);
+    // 回显角色已有的菜单权限（menuIds 为字符串数组，避免精度丢失）
+    setCheckedMenuKeys((detail?.menuIds as string[]) || []);
     setMenuModalOpen(true);
-  };
-
-  const loadMenuTree = async () => {
-    const data = await getMenuTree();
-    setMenuTree(data || []);
   };
 
   const handleMenuOk = async () => {
@@ -178,11 +179,28 @@ const RoleList: React.FC = () => {
     setMenuModalOpen(false);
   };
 
+  // 把平铺的 API 列表组织成 目录(group) + 接口(api) 两级树
+  const buildApiTree = (apis: SaaS.SysApi[]): any[] => {
+    const groups = apis.filter((a) => a.apiType === 'group');
+    const items = apis.filter((a) => a.apiType === 'api');
+    return groups
+      .map((g) => ({
+        ...g,
+        children: items.filter((i) => i.apiPath.startsWith(`${g.apiPath}/`)),
+      }))
+      .filter((g) => g.children.length > 0);
+  };
+
   const openApiModal = async (r: SaaS.SysRole) => {
     setApiRole(r);
     setCheckedApiIds([]);
-    const res = await getApiList({ page: 1, pageSize: 9999 });
-    setApiList(res.list || []);
+    const [res, detail] = await Promise.all([
+      getApiList({ page: 1, pageSize: 100 }).catch(() => ({ list: [] })),
+      getRoleDetail(r.idStr!).catch(() => undefined),
+    ]);
+    setApiTree(buildApiTree(res.list || []));
+    // 回显角色已有的 API 权限（apiIds 为字符串数组，避免精度丢失）
+    setCheckedApiIds((detail?.apiIds as string[]) || []);
     setApiModalOpen(true);
   };
 
@@ -323,27 +341,18 @@ const RoleList: React.FC = () => {
         width={700}
       >
         <div style={{ maxHeight: 400, overflow: 'auto' }}>
-          {apiList.map((api) => (
-            <div key={api.idStr} style={{ padding: '4px 0' }}>
-              <Checkbox
-                checked={checkedApiIds.includes(api.idStr!)}
-                onChange={(e) => {
-                  if (e.target.checked) {
-                    setCheckedApiIds([...checkedApiIds, api.idStr!]);
-                  } else {
-                    setCheckedApiIds(
-                      checkedApiIds.filter((k) => k !== api.idStr),
-                    );
-                  }
-                }}
-              >
-                <Tag color="blue">{api.apiMethod}</Tag> {api.apiPath}
-                <span style={{ marginLeft: 8, color: '#999' }}>
-                  {api.apiName}
-                </span>
-              </Checkbox>
-            </div>
-          ))}
+          <Tree
+            checkable
+            treeData={apiTree}
+            fieldNames={{
+              title: 'apiName',
+              key: 'idStr',
+              children: 'children',
+            }}
+            checkedKeys={checkedApiIds}
+            onCheck={(keys) => setCheckedApiIds(keys as React.Key[])}
+            defaultExpandAll
+          />
         </div>
       </Modal>
     </>

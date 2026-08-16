@@ -20,6 +20,31 @@ const methodColor: Record<string, string> = {
   PATCH: 'purple',
 };
 
+// 把平铺的 API 列表组织成 目录(group) + 接口(api) 两级树。
+// 目录 path 是前缀（如 /system/user），接口 path 以目录 path 开头。
+const buildApiTree = (apis: any[]): any[] => {
+  const groups = apis.filter((a) => a.apiType === 'group');
+  const items = apis.filter((a) => a.apiType === 'api');
+  return groups
+    .map((g) => ({
+      ...g,
+      children: items.filter((i) => i.apiPath.startsWith(`${g.apiPath}/`)),
+    }))
+    .filter((g) => g.children.length > 0);
+};
+
+// 去掉空 children：树形表格只要存在 children 字段（即使空数组）就会显示展开箭头
+const cleanTree = (items: any[]): any[] =>
+  items.map((item) => {
+    const copy = { ...item };
+    if (copy.children?.length) {
+      copy.children = cleanTree(copy.children);
+    } else {
+      delete copy.children;
+    }
+    return copy;
+  });
+
 const ApiList: React.FC = () => {
   const intl = useIntl();
   const actionRef = useRef<ActionType>(null);
@@ -28,26 +53,36 @@ const ApiList: React.FC = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [editRecord, setEditRecord] = useState<any>(null);
   const [form] = Form.useForm();
+  const apiType = Form.useWatch('apiType', form);
 
   const columns: ProColumns<any>[] = [
-    { title: f('entity.api.name'), dataIndex: 'apiName', width: 140 },
+    { title: f('entity.api.name'), dataIndex: 'apiName', width: 200 },
     {
       title: f('entity.api.type'),
       dataIndex: 'apiType',
       width: 80,
       hideInSearch: true,
       render: (_, r) => (
-        <Tag>{r.apiType === 'group' ? f('entity.menu.directory') : 'API'}</Tag>
+        <Tag color={r.apiType === 'group' ? 'blue' : 'green'}>
+          {r.apiType === 'group' ? f('entity.menu.directory') : 'API'}
+        </Tag>
       ),
     },
-    { title: f('entity.api.path'), dataIndex: 'apiPath', width: 280 },
+    {
+      title: f('entity.api.path'),
+      dataIndex: 'apiPath',
+      width: 280,
+      hideInSearch: true,
+    },
     {
       title: f('entity.api.method'),
       dataIndex: 'apiMethod',
       width: 100,
-      render: (_, r) => (
-        <Tag color={methodColor[r.apiMethod]}>{r.apiMethod}</Tag>
-      ),
+      hideInSearch: true,
+      render: (_, r) => {
+        const m = (r.apiMethod || '').toUpperCase();
+        return m ? <Tag color={methodColor[m]}>{m}</Tag> : null;
+      },
     },
     {
       title: f('entity.status'),
@@ -83,6 +118,7 @@ const ApiList: React.FC = () => {
             size="small"
             onClick={() => {
               setEditRecord(r);
+              form.resetFields();
               form.setFieldsValue(r);
               setModalOpen(true);
             }}
@@ -118,15 +154,13 @@ const ApiList: React.FC = () => {
         rowKey="idStr"
         actionRef={actionRef}
         columns={columns}
-        request={async (params) => {
-          const res = await getApiList({
-            page: params.current || 1,
-            pageSize: params.pageSize || 10,
-            apiName: params.apiName,
-            apiMethod: params.apiMethod,
-            status: params.status,
-          });
-          return { data: res.list, success: true, total: res.total };
+        request={async () => {
+          const res = await getApiList({ page: 1, pageSize: 100 });
+          return {
+            data: cleanTree(buildApiTree(res.list || [])),
+            success: true,
+            total: res.list?.length || 0,
+          };
         }}
         toolBarRender={() => [
           <Button
@@ -142,8 +176,8 @@ const ApiList: React.FC = () => {
             {f('pages.api.create')}
           </Button>,
         ]}
-        search={{ labelWidth: 'auto' }}
-        pagination={{ pageSize: 10 }}
+        search={false}
+        pagination={false}
       />
       <Modal
         title={f(editRecord ? 'pages.api.edit' : 'pages.api.create')}
@@ -185,24 +219,28 @@ const ApiList: React.FC = () => {
             />
           </Form.Item>
           <Form.Item name="apiPath" label={f('entity.api.path')}>
-            <Input />
+            <Input placeholder="/system/user/list" />
           </Form.Item>
-          <Form.Item
-            name="apiMethod"
-            label={f('entity.api.method')}
-            initialValue="GET"
-          >
-            <Select
-              options={['GET', 'POST', 'PUT', 'DELETE', 'PATCH'].map((m) => ({
-                value: m,
-                label: (
-                  <>
-                    <Tag color={methodColor[m]}>{m}</Tag>
-                  </>
-                ),
-              }))}
-            />
-          </Form.Item>
+          {apiType !== 'group' && (
+            <Form.Item
+              name="apiMethod"
+              label={f('entity.api.method')}
+              initialValue="get"
+            >
+              <Select
+                options={['get', 'post', 'put', 'delete'].map((m) => ({
+                  value: m,
+                  label: (
+                    <>
+                      <Tag color={methodColor[m.toUpperCase()]}>
+                        {m.toUpperCase()}
+                      </Tag>
+                    </>
+                  ),
+                }))}
+              />
+            </Form.Item>
+          )}
           <Form.Item
             name="status"
             label={f('entity.status')}

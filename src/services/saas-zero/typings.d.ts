@@ -90,6 +90,8 @@ declare namespace SaaS {
     status: string;
     sort: number;
     remark?: string;
+    menuIds?: string[];
+    apiIds?: string[];
     createdAt: string;
     createdBy: string;
     updatedAt: string;

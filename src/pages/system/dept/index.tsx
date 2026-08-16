@@ -39,6 +39,19 @@ const flattenTree = (
   return result;
 };
 
+// 去掉空 children：antd 树形表格只要存在 children 字段（即使为空数组）
+// 就会显示展开箭头，导致叶子节点也出现多余的展开按钮。
+const stripEmptyChildren = (items: any[]): any[] =>
+  (items || []).map((item) => {
+    const node = { ...item };
+    if (Array.isArray(node.children) && node.children.length > 0) {
+      node.children = stripEmptyChildren(node.children);
+    } else {
+      delete node.children;
+    }
+    return node;
+  });
+
 const DeptList: React.FC = () => {
   const intl = useIntl();
   const actionRef = useRef<ActionType>(null);
@@ -49,12 +62,31 @@ const DeptList: React.FC = () => {
   const [parentOptions, setParentOptions] = useState<
     { id: string; name: string }[]
   >([]);
+  // 新增下级部门时记录的上级部门（用于默认选中 + 标题展示）
+  const [createParentName, setCreateParentName] = useState<string | undefined>(
+    undefined,
+  );
 
   const f = (id: string) => intl.formatMessage({ id });
 
   const openCreateModal = async () => {
     setEditRecord(null);
+    setCreateParentName(undefined);
     form.resetFields();
+    try {
+      const res = await getDeptTree();
+      setParentOptions(flattenTree(res));
+    } catch {
+      setParentOptions([]);
+    }
+    setModalOpen(true);
+  };
+
+  const openAddChildModal = async (record: any) => {
+    setEditRecord(null);
+    setCreateParentName(record.name);
+    form.resetFields();
+    form.setFieldsValue({ parentId: record.idStr });
     try {
       const res = await getDeptTree();
       setParentOptions(flattenTree(res));
@@ -134,6 +166,14 @@ const DeptList: React.FC = () => {
           <Button
             type="link"
             size="small"
+            icon={<PlusOutlined />}
+            onClick={() => openAddChildModal(r)}
+          >
+            {f('pages.system.dept.addChild')}
+          </Button>
+          <Button
+            type="link"
+            size="small"
             danger
             icon={<DeleteOutlined />}
             onClick={() =>
@@ -162,7 +202,11 @@ const DeptList: React.FC = () => {
         columns={columns}
         request={async () => {
           const res = await getDeptTree();
-          return { data: res, success: true, total: res.length };
+          return {
+            data: stripEmptyChildren(res),
+            success: true,
+            total: res.length,
+          };
         }}
         toolBarRender={() => [
           <Button
@@ -179,7 +223,11 @@ const DeptList: React.FC = () => {
       />
       <Modal
         title={f(
-          editRecord ? 'pages.system.dept.edit' : 'pages.system.dept.create',
+          editRecord
+            ? 'pages.system.dept.edit'
+            : createParentName
+              ? 'pages.system.dept.createChild'
+              : 'pages.system.dept.create',
         )}
         open={modalOpen}
         onOk={async () => {
