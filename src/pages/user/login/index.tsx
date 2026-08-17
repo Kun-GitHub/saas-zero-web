@@ -5,13 +5,24 @@ import {
   SafetyCertificateOutlined,
   UserOutlined,
 } from '@ant-design/icons';
-import { LoginForm, ProFormCheckbox, ProFormText } from '@ant-design/pro-components';
-import { Helmet, SelectLang, history, useIntl, useModel } from '@umijs/max';
+import {
+  LoginForm,
+  ProFormCheckbox,
+  ProFormText,
+} from '@ant-design/pro-components';
+import { Helmet, history, SelectLang, useIntl, useModel } from '@umijs/max';
 import { App } from 'antd';
 import { createStyles } from 'antd-style';
 import React, { useEffect, useState } from 'react';
 import { flushSync } from 'react-dom';
-import { getCaptcha, getCurrentUser, getPermissions, login } from '@/services/saas-zero/auth';
+import {
+  getCaptcha,
+  getCurrentUser,
+  getMenus,
+  getPermissions,
+  login,
+} from '@/services/saas-zero/auth';
+import { buildLayoutMenu } from '@/utils/menu';
 import Settings from '../../../../config/defaultSettings';
 
 const useStyles = createStyles(({ token }) => ({
@@ -32,7 +43,8 @@ const useStyles = createStyles(({ token }) => ({
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
-    background: 'linear-gradient(135deg, #1e3a5f 0%, #2563eb 50%, #4f46e5 100%)',
+    background:
+      'linear-gradient(135deg, #1e3a5f 0%, #2563eb 50%, #4f46e5 100%)',
     color: '#fff',
     position: 'relative',
     overflow: 'hidden',
@@ -194,7 +206,14 @@ const Login: React.FC = () => {
         captchaVal: values.captcha,
       });
       sessionStorage.setItem('saas-zero-token', result.token);
+      sessionStorage.setItem('saas-zero-tenant', values.tenantCode);
+      // 登录后重新拉取该用户的后端菜单，写入 initialState.menuData。
+      // getInitialState 只在应用启动时执行一次，若不重新拉取，
+      // 切换用户后左侧菜单仍显示上一个用户的旧菜单（需手动刷新才正确）。
+      const apiMenus = await getMenus().catch(() => undefined);
+      const menuData = buildLayoutMenu(apiMenus);
       const userInfo = await getCurrentUser();
+      userInfo.tenantCode = values.tenantCode;
       try {
         const perms = await getPermissions();
         if (perms) {
@@ -207,6 +226,7 @@ const Login: React.FC = () => {
         setInitialState((s: any) => ({
           ...s,
           currentUser: userInfo,
+          menuData,
         }));
       });
       const redirect = new URLSearchParams(history.location.search).get(
@@ -224,7 +244,9 @@ const Login: React.FC = () => {
   return (
     <div className={styles.container}>
       <Helmet>
-        <title>{f('menu.login')} - {Settings.title}</title>
+        <title>
+          {f('menu.login')} - {Settings.title}
+        </title>
       </Helmet>
       <div className={styles.lang}>
         <SelectLang />
@@ -235,9 +257,7 @@ const Login: React.FC = () => {
             <BuildOutlined />
           </div>
           <div className={styles.systemName}>SaaS-Zero</div>
-          <div className={styles.systemDesc}>
-            {f('pages.login.subtitle')}
-          </div>
+          <div className={styles.systemDesc}>{f('pages.login.subtitle')}</div>
         </div>
       </div>
       <div className={styles.rightPanel}>
@@ -248,7 +268,12 @@ const Login: React.FC = () => {
             logo={false}
             title={false}
             subTitle={false}
-            initialValues={{ tenantCode: 'default', username: 'admin', password: '123456', autoLogin: true }}
+            initialValues={{
+              tenantCode: 'default',
+              username: 'admin',
+              password: '123456',
+              autoLogin: true,
+            }}
             onFinish={handleSubmit}
             submitter={{
               searchConfig: { submitText: f('pages.login.submit') },
@@ -262,7 +287,12 @@ const Login: React.FC = () => {
                 prefix: <BuildOutlined style={{ color: '#94a3b8' }} />,
                 placeholder: f('pages.login.tenantCode.placeholder'),
               }}
-              rules={[{ required: true, message: f('pages.login.tenantCode.required') }]}
+              rules={[
+                {
+                  required: true,
+                  message: f('pages.login.tenantCode.required'),
+                },
+              ]}
             />
             <ProFormText
               name="username"
@@ -271,7 +301,9 @@ const Login: React.FC = () => {
                 prefix: <UserOutlined style={{ color: '#94a3b8' }} />,
                 placeholder: f('pages.login.username.placeholder'),
               }}
-              rules={[{ required: true, message: f('pages.login.username.required') }]}
+              rules={[
+                { required: true, message: f('pages.login.username.required') },
+              ]}
             />
             <ProFormText.Password
               name="password"
@@ -280,7 +312,9 @@ const Login: React.FC = () => {
                 prefix: <LockOutlined style={{ color: '#94a3b8' }} />,
                 placeholder: f('pages.login.password.placeholder'),
               }}
-              rules={[{ required: true, message: f('pages.login.password.required') }]}
+              rules={[
+                { required: true, message: f('pages.login.password.required') },
+              ]}
             />
             <div className={styles.captchaRow}>
               <div className={styles.captchaInput}>
@@ -288,10 +322,17 @@ const Login: React.FC = () => {
                   name="captcha"
                   fieldProps={{
                     size: 'large',
-                    prefix: <SafetyCertificateOutlined style={{ color: '#94a3b8' }} />,
+                    prefix: (
+                      <SafetyCertificateOutlined style={{ color: '#94a3b8' }} />
+                    ),
                     placeholder: f('pages.login.captcha.placeholder'),
                   }}
-                  rules={[{ required: true, message: f('pages.login.captcha.required') }]}
+                  rules={[
+                    {
+                      required: true,
+                      message: f('pages.login.captcha.required'),
+                    },
+                  ]}
                 />
               </div>
               <div className={styles.captchaImgBox}>
@@ -311,7 +352,13 @@ const Login: React.FC = () => {
                 )}
               </div>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
               <ProFormCheckbox name="autoLogin">
                 {f('pages.login.rememberMe')}
               </ProFormCheckbox>

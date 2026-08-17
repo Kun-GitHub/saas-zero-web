@@ -1,4 +1,3 @@
-import * as Icons from '@ant-design/icons';
 import { KeyOutlined, LogoutOutlined, UserOutlined } from '@ant-design/icons';
 import type { Settings as LayoutSettings } from '@ant-design/pro-components';
 import { SettingDrawer } from '@ant-design/pro-components';
@@ -13,6 +12,7 @@ import {
   getMenus,
   getPermissions,
 } from '@/services/saas-zero/auth';
+import { buildLayoutMenu } from '@/utils/menu';
 import defaultSettings from '../config/defaultSettings';
 
 const isDev = process.env.NODE_ENV === 'development' || process.env.CI;
@@ -28,6 +28,7 @@ export async function getInitialState(): Promise<{
   const fetchUserInfo = async () => {
     try {
       const user = await getCurrentUser();
+      user.tenantCode = sessionStorage.getItem('saas-zero-tenant') || undefined;
       // Fetch permissions and merge into currentUser
       try {
         const perms = await getPermissions();
@@ -51,16 +52,10 @@ export async function getInitialState(): Promise<{
       fetchUserInfo(),
       getMenus().catch(() => undefined),
     ]);
-    const baseMenuData =
-      apiMenus && apiMenus.length > 0
-        ? apiMenus
-            .filter((m: any) => m.menuType !== 'button')
-            .map((m: any) => apiMenuToLayout(m))
-        : [];
     return {
       fetchUserInfo,
       currentUser,
-      menuData: baseMenuData,
+      menuData: buildLayoutMenu(apiMenus),
       settings: defaultSettings as Partial<LayoutSettings>,
     };
   }
@@ -69,24 +64,6 @@ export async function getInitialState(): Promise<{
     settings: defaultSettings as Partial<LayoutSettings>,
   };
 }
-
-const apiMenuToLayout = (m: any): any => {
-  // ProLayout/antd Menu keys items by `path`. Directory nodes with an empty
-  // path would all collapse to `undefined`, making sibling directories expand,
-  // collapse and highlight together. Guarantee a unique, stable path per node.
-  const path = m.path || `/__menu_${m.id}`;
-  const children = (m.children?.length ? m.children : [])
-    .filter((c: any) => c.menuType !== 'button')
-    .map((c: any) => apiMenuToLayout(c));
-  return {
-    key: path,
-    name: m.name,
-    path,
-    icon: m.icon ? resolveIcon(m.icon) : undefined,
-    hideInMenu: m.hidden || false,
-    children: children.length ? children : undefined,
-  };
-};
 
 const AvatarDropdown: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -126,19 +103,6 @@ const AvatarDropdown: React.FC<{ children: React.ReactNode }> = ({
       {children}
     </Dropdown>
   );
-};
-
-const iconCache = new Map<string, React.ReactNode>();
-const resolveIcon = (name: string): React.ReactNode => {
-  if (iconCache.has(name)) return iconCache.get(name);
-  const Comp = (Icons as any)[name + 'Outlined'] || (Icons as any)[name];
-  if (!Comp) {
-    iconCache.set(name, null);
-    return null;
-  }
-  const node = <Comp />;
-  iconCache.set(name, node);
-  return node;
 };
 
 export const layout: RunTimeLayoutConfig = ({

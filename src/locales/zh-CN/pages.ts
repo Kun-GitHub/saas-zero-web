@@ -152,6 +152,7 @@ export default {
   'entity.role': '角色',
   'entity.roleName': '角色名称',
   'entity.roleCode': '角色编码',
+  'entity.isSystem': '系统',
   'entity.status': '状态',
   'entity.sort': '排序',
   'validation.sortRequired': '排序不能为空',

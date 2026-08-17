@@ -20,7 +20,7 @@ import {
   Tree,
 } from 'antd';
 import React, { useRef, useState } from 'react';
-import { getApiList } from '@/services/saas-zero/api';
+import { getMyApis } from '@/services/saas-zero/api';
 import { getMenuTree } from '@/services/saas-zero/menu';
 import {
   assignRoleApis,
@@ -61,7 +61,17 @@ const RoleList: React.FC = () => {
   const f = (id: string) => intl.formatMessage({ id });
 
   const columns: ProColumns<SaaS.SysRole>[] = [
-    { title: f('entity.roleName'), dataIndex: 'name', width: 140 },
+    {
+      title: f('entity.roleName'),
+      dataIndex: 'name',
+      width: 140,
+      render: (_, r) => (
+        <>
+          {r.name}
+          {r.isSystem && <Tag color="processing">{f('entity.isSystem')}</Tag>}
+        </>
+      ),
+    },
     { title: f('entity.roleCode'), dataIndex: 'code', width: 120 },
     {
       title: f('entity.status'),
@@ -108,7 +118,7 @@ const RoleList: React.FC = () => {
       hideInSearch: true,
       render: (_, r) => (
         <Space>
-          {can('system:role:update') && (
+          {can('system:role:update') && !r.isSystem && (
             <Button
               type="link"
               size="small"
@@ -121,7 +131,7 @@ const RoleList: React.FC = () => {
               {f('entity.edit')}
             </Button>
           )}
-          {can('system:role:assignMenus') && (
+          {can('system:role:assignMenus') && !r.isSystem && (
             <Button
               type="link"
               size="small"
@@ -131,7 +141,7 @@ const RoleList: React.FC = () => {
               {f('pages.system.role.assignMenus')}
             </Button>
           )}
-          {can('system:role:assignApis') && (
+          {can('system:role:assignApis') && !r.isSystem && (
             <Button
               type="link"
               size="small"
@@ -141,7 +151,7 @@ const RoleList: React.FC = () => {
               {f('pages.system.role.assignApis')}
             </Button>
           )}
-          {can('system:role:delete') && (
+          {can('system:role:delete') && !r.isSystem && (
             <Button
               type="link"
               size="small"
@@ -166,6 +176,19 @@ const RoleList: React.FC = () => {
     },
   ];
 
+  // 收集树中全部节点 key（含子级），用于把回显选中限制在当前用户可授权范围内
+  const collectTreeKeys = (nodes: any[]): string[] => {
+    const keys: string[] = [];
+    const walk = (list: any[]) => {
+      list.forEach((n) => {
+        keys.push(n.idStr);
+        if (n.children?.length) walk(n.children);
+      });
+    };
+    walk(nodes || []);
+    return keys;
+  };
+
   const openMenuModal = async (r: SaaS.SysRole) => {
     setMenuRole(r);
     setCheckedMenuKeys([]);
@@ -175,7 +198,12 @@ const RoleList: React.FC = () => {
     ]);
     setMenuTree(tree || []);
     // 回显角色已有的菜单权限（menuIds 为字符串数组，避免精度丢失）
-    setCheckedMenuKeys((detail?.menuIds as string[]) || []);
+    // 只保留自己可授权范围内的菜单，避免回显超出自身权限的选中项
+    const available = new Set(collectTreeKeys(tree || []));
+    const checked = ((detail?.menuIds as string[]) || []).filter((id) =>
+      available.has(id),
+    );
+    setCheckedMenuKeys(checked);
     setMenuModalOpen(true);
   };
 
@@ -205,12 +233,18 @@ const RoleList: React.FC = () => {
     setApiRole(r);
     setCheckedApiIds([]);
     const [res, detail] = await Promise.all([
-      getApiList({ page: 1, pageSize: 100 }).catch(() => ({ list: [] })),
+      getMyApis().catch(() => ({ list: [] })),
       getRoleDetail(r.idStr!).catch(() => undefined),
     ]);
-    setApiTree(buildApiTree(res.list || []));
+    const treeData = buildApiTree(res.list || []);
+    setApiTree(treeData);
     // 回显角色已有的 API 权限（apiIds 为字符串数组，避免精度丢失）
-    setCheckedApiIds((detail?.apiIds as string[]) || []);
+    // 只保留自己可授权范围内的 API，避免回显超出自身权限的选中项
+    const available = new Set(collectTreeKeys(treeData));
+    const checked = ((detail?.apiIds as string[]) || []).filter((id) =>
+      available.has(id),
+    );
+    setCheckedApiIds(checked);
     setApiModalOpen(true);
   };
 

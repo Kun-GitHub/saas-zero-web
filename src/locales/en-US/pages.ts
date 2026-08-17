@@ -153,6 +153,7 @@ export default {
   'entity.role': 'Role',
   'entity.roleName': 'Role Name',
   'entity.roleCode': 'Role Code',
+  'entity.isSystem': 'System',
   'entity.status': 'Status',
   'entity.sort': 'Sort',
   'validation.sortRequired': 'Sort is required',

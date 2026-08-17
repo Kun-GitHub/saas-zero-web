@@ -16,6 +16,10 @@ export async function getApiList(params: SaaS.ApiQuery) {
   return request<SaaS.PageResult<SaaS.SysApi>>('/system/api/list', { method: 'GET', params });
 }
 
+export async function getMyApis() {
+  return request<SaaS.PageResult<SaaS.SysApi>>('/system/api/mine', { method: 'GET' });
+}
+
 export async function getApiDetail(id: string) {
   return request<SaaS.SysApi>('/system/api/detail', { method: 'GET', params: { id } });
 }

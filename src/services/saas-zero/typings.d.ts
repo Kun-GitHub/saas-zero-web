@@ -2,6 +2,7 @@ declare namespace SaaS {
   type CurrentUser = {
     userId: string;
     tenantId: string;
+    tenantCode?: string;
     userName: string;
     nickname: string;
     avatar?: string;
@@ -90,6 +91,7 @@ declare namespace SaaS {
     status: string;
     sort: number;
     remark?: string;
+    isSystem?: boolean;
     menuIds?: string[];
     apiIds?: string[];
     createdAt: string;
@@ -153,6 +155,7 @@ declare namespace SaaS {
     id?: number;
     idStr?: string;
     name: string;
+    parentName?: string;
     leader?: string;
     phone?: string;
     status: string;
@@ -182,6 +185,8 @@ declare namespace SaaS {
     name: string;
     code: string;
     adminId?: string;
+    parentId?: string;
+    parentName?: string;
     packageId?: string;
     packageName?: string;
     expiredAt?: string;
@@ -217,6 +222,7 @@ declare namespace SaaS {
     code?: string;
     packageId?: string;
     adminId?: string;
+    parentId?: string;
     expiredAt?: string;
     status?: string;
     remark?: string;
