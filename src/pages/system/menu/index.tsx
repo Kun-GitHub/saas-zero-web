@@ -57,7 +57,13 @@ const filterTree = (items: any[], keyword?: string, status?: string): any[] =>
         ? filterTree(item.children, keyword, status)
         : [];
       if (match || children.length > 0) {
-        return { ...item, children };
+        const copy = { ...item };
+        if (children.length > 0) {
+          copy.children = children;
+        } else {
+          delete copy.children;
+        }
+        return copy;
       }
       return null;
     })

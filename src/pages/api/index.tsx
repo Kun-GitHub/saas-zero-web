@@ -67,7 +67,13 @@ const filterTree = (
         ? filterTree(item.children, keyword, apiType, status)
         : [];
       if (match || children.length > 0) {
-        return { ...item, children };
+        const copy = { ...item };
+        if (children.length > 0) {
+          copy.children = children;
+        } else {
+          delete copy.children;
+        }
+        return copy;
       }
       return null;
     })
