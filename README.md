@@ -4,6 +4,15 @@
 
 > 本 README 为项目综合指南（含对外使用说明）。**代码架构**细节见 [`AGENTS.md`](./AGENTS.md)。
 
+| 模块 | 协议 | 端口 | 职责 |
+|---|---|---|---|
+| [saas-zero-gateway](https://github.com/saas-zero/saas-zero-gateway) | HTTP 代理 | `:18080` | 统一入口，路径转发，**不做鉴权** |
+| [saas-zero-auth](https://github.com/saas-zero/saas-zero-auth) | HTTP + gRPC | `:18081` | 登录、验证码、JWT 签发/校验/刷新、用户信息/菜单/权限码 |
+| [saas-zero-basedata](https://github.com/saas-zero/saas-zero-basedata) | HTTP + gRPC | `:18083 / :18084` | API 层（JWT/Casbin/操作日志中间件）→ RPC 层（Ent 业务 + 策略管理） |
+| [saas-zero-etcd](https://github.com/saas-zero/saas-zero-etcd) | etcd | — | etcd 调试工具 |
+| [saas-zero-common](https://github.com/saas-zero/saas-zero-common) | Go 库 | — | Mixin / 雪花 ID / bcrypt / JWT / 加密 / Casbin / 错误码等公共库 |
+| [saas-zero-web](https://github.com/Kun-GitHub/saas-zero-web) | 前端项目 |
+
 ## 技术栈
 
 | 技术 | 用途 | 版本 |
