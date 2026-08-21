@@ -164,7 +164,7 @@ export const layout: RunTimeLayoutConfig = ({
 };
 
 export const request: RequestConfig = {
-  baseURL: '',
+  baseURL: process.env.NODE_ENV === 'production' ? '/api' : '',
   requestInterceptors: [
     (config: any) => {
       const token = sessionStorage.getItem('saas-zero-token');
