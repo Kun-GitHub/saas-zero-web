@@ -13,7 +13,7 @@ RUN echo 'server { \
                               add_header Access-Control-Allow-Origin *; \
                               add_header Access-Control-Allow-Headers X-Requested-With; \
                               add_header Access-Control-Allow-Methods GET,POST,OPTIONS; \
-                              proxy_pass  http://mingyang-go.app.svc.cluster.local:18080/; \
+                              proxy_pass  http://saas-zero-gateway.app.svc.cluster.local:18080/; \
                               proxy_redirect default; \
                       } \
 
