@@ -22,7 +22,11 @@ declare namespace SaaS {
 
   type LoginResult = {
     token: string;
-    user: CurrentUser;
+    userId: string;
+    username: string;
+    nickname: string;
+    tenantId: string;
+    tenantCode: string;
   };
 
   type CaptchaResult = {
