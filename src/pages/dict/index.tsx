@@ -15,6 +15,7 @@ import {
   Tag,
 } from 'antd';
 import React, { useEffect, useState } from 'react';
+import { useSystemDict } from '@/hooks/useSystemDict';
 import {
   createDict,
   createDictData,
@@ -32,6 +33,7 @@ const DictPage: React.FC = () => {
   const intl = useIntl();
   const { message, modal } = App.useApp();
   const { can } = usePermission();
+  const statusDict = useSystemDict('status', ['active', 'inactive']);
   const f = (id: string) => intl.formatMessage({ id });
   const [dicts, setDicts] = useState<SaaS.SysDict[]>([]);
   const [selectedDict, setSelectedDict] = useState<SaaS.SysDict | null>(null);
@@ -106,7 +108,9 @@ const DictPage: React.FC = () => {
       dataIndex: 'status',
       key: 'status',
       render: (s: string) => (
-        <Tag color={s === 'active' ? 'green' : 'red'}>{f(`status.${s}`)}</Tag>
+        <Tag color={s === 'active' ? 'green' : 'red'}>
+          {statusDict.getLabel(s)}
+        </Tag>
       ),
     },
     { title: f('entity.remark'), dataIndex: 'remark', key: 'remark' },
@@ -322,12 +326,7 @@ const DictPage: React.FC = () => {
             rules={[{ required: true }]}
             initialValue="active"
           >
-            <Select
-              options={[
-                { value: 'active', label: f('status.active') },
-                { value: 'inactive', label: f('status.inactive') },
-              ]}
-            />
+            <Select options={statusDict.options} />
           </Form.Item>
           <Form.Item name="remark" label={f('entity.remark')}>
             <Input.TextArea />
@@ -384,12 +383,7 @@ const DictPage: React.FC = () => {
             rules={[{ required: true }]}
             initialValue="active"
           >
-            <Select
-              options={[
-                { value: 'active', label: f('status.active') },
-                { value: 'inactive', label: f('status.inactive') },
-              ]}
-            />
+            <Select options={statusDict.options} />
           </Form.Item>
           <Form.Item name="remark" label={f('entity.remark')}>
             <Input.TextArea />

@@ -19,6 +19,7 @@ import {
 } from 'antd';
 import React, { useRef, useState } from 'react';
 import IconPicker from '@/components/IconPicker';
+import { useSystemDict } from '@/hooks/useSystemDict';
 import {
   createMenu,
   deleteMenu,
@@ -93,6 +94,8 @@ const MenuList: React.FC = () => {
   const actionRef = useRef<ActionType>(null);
   const { message, modal } = App.useApp();
   const { can } = usePermission();
+  const statusDict = useSystemDict('status', ['active', 'inactive']);
+  const menuTypeDict = useSystemDict('menu_type');
   const [modalOpen, setModalOpen] = useState(false);
   const [editRecord, setEditRecord] = useState<any>(null);
   const [form] = Form.useForm();
@@ -142,7 +145,7 @@ const MenuList: React.FC = () => {
       width: 100,
       render: (_, r) => (
         <Tag color={typeColor[r.menuType]}>
-          {f(`entity.menu.${r.menuType}`)}
+          {menuTypeDict.getLabel(r.menuType)}
         </Tag>
       ),
     },
@@ -165,13 +168,15 @@ const MenuList: React.FC = () => {
       dataIndex: 'status',
       width: 80,
       valueType: 'select',
-      valueEnum: {
-        active: { text: f('status.active') },
-        inactive: { text: f('status.inactive') },
-      },
+      valueEnum: Object.fromEntries(
+        statusDict.options.map((option) => [
+          option.value,
+          { text: option.label },
+        ]),
+      ),
       render: (_, r) => (
         <Tag color={r.status === 'active' ? 'green' : 'red'}>
-          {f(`status.${r.status}`)}
+          {statusDict.getLabel(r.status)}
         </Tag>
       ),
     },
@@ -302,13 +307,7 @@ const MenuList: React.FC = () => {
             rules={[{ required: true }]}
             initialValue="menu"
           >
-            <Select
-              options={[
-                { value: 'directory', label: f('entity.menu.directory') },
-                { value: 'menu', label: f('entity.menu.menu') },
-                { value: 'button', label: f('entity.menu.button') },
-              ]}
-            />
+            <Select options={menuTypeDict.options} />
           </Form.Item>
           <Form.Item name="parentId" label={f('entity.menu.parent')}>
             <Select
@@ -347,12 +346,7 @@ const MenuList: React.FC = () => {
             rules={[{ required: true }]}
             initialValue="active"
           >
-            <Select
-              options={[
-                { value: 'active', label: f('status.active') },
-                { value: 'inactive', label: f('status.inactive') },
-              ]}
-            />
+            <Select options={statusDict.options} />
           </Form.Item>
         </Form>
       </Modal>

@@ -16,6 +16,7 @@ import {
   Tree,
 } from 'antd';
 import React, { useEffect, useState } from 'react';
+import { useSystemDict } from '@/hooks/useSystemDict';
 import { getApiList } from '@/services/saas-zero/api';
 import { getMenuTree } from '@/services/saas-zero/menu';
 import {
@@ -46,6 +47,7 @@ const PackageList: React.FC = () => {
   const intl = useIntl();
   const { message, modal } = App.useApp();
   const { can } = usePermission();
+  const statusDict = useSystemDict('status', ['active', 'inactive']);
   const f = (id: string) => intl.formatMessage({ id });
   const [packages, setPackages] = useState<SaaS.SysPackage[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
@@ -145,10 +147,7 @@ const PackageList: React.FC = () => {
           style={{ width: 140 }}
           value={searchStatus}
           onChange={setSearchStatus}
-          options={[
-            { value: 'active', label: f('status.active') },
-            { value: 'inactive', label: f('status.inactive') },
-          ]}
+          options={statusDict.options}
         />
         <div style={{ flex: 1 }} />
       </div>
@@ -189,11 +188,7 @@ const PackageList: React.FC = () => {
                 }}
               >
                 <h3 style={{ margin: 0 }}>{pkg.name}</h3>
-                <Tag color="green">
-                  {pkg.status === 'active'
-                    ? f('status.active')
-                    : f('status.inactive')}
-                </Tag>
+                <Tag color="green">{statusDict.getLabel(pkg.status)}</Tag>
               </div>
               <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 12 }}>
                 {f('entity.updatedAt')}: {formatDateTime(pkg.updatedAt)} ·{' '}
@@ -303,12 +298,7 @@ const PackageList: React.FC = () => {
             rules={[{ required: true }]}
             initialValue="active"
           >
-            <Select
-              options={[
-                { value: 'active', label: f('status.active') },
-                { value: 'inactive', label: f('status.inactive') },
-              ]}
-            />
+            <Select options={statusDict.options} />
           </Form.Item>
         </Form>
       </Modal>

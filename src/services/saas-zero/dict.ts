@@ -71,7 +71,7 @@ export async function getDictDataDetail(id: string) {
 }
 
 export async function getDictDataByDictKey(dictKey: string) {
-  return request<SaaS.SysDictData[]>('/system/dictData/byDictKey', {
+  return request<SaaS.PageResult<SaaS.SysDictData>>('/system/dictData/byDictKey', {
     method: 'GET',
     params: { key: dictKey },
   });

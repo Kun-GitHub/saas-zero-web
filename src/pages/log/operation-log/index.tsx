@@ -3,12 +3,14 @@ import { ProTable } from '@ant-design/pro-components';
 import { useIntl } from '@umijs/max';
 import { Tag } from 'antd';
 import React, { useRef } from 'react';
+import { useSystemDict } from '@/hooks/useSystemDict';
 import { getOperationLogList } from '@/services/saas-zero/log';
 import { formatDateTime } from '@/utils/datetime';
 
 const OperationLogList: React.FC = () => {
   const intl = useIntl();
   const actionRef = useRef<ActionType>(null);
+  const statusDict = useSystemDict('status', ['success', 'failure']);
   const f = (id: string) => intl.formatMessage({ id });
 
   const columns: ProColumns<any>[] = [
@@ -27,7 +29,7 @@ const OperationLogList: React.FC = () => {
       width: 80,
       render: (_, r) => (
         <Tag color={r.status === 'success' ? 'green' : 'red'}>
-          {f(`status.${r.status}`)}
+          {statusDict.getLabel(r.status)}
         </Tag>
       ),
     },

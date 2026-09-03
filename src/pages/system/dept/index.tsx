@@ -14,6 +14,7 @@ import {
   Tag,
 } from 'antd';
 import React, { useRef, useState } from 'react';
+import { useSystemDict } from '@/hooks/useSystemDict';
 import {
   createDept,
   deleteDept,
@@ -58,6 +59,7 @@ const DeptList: React.FC = () => {
   const actionRef = useRef<ActionType>(null);
   const { message, modal } = App.useApp();
   const { can } = usePermission();
+  const statusDict = useSystemDict('status', ['active', 'inactive']);
   const [modalOpen, setModalOpen] = useState(false);
   const [editRecord, setEditRecord] = useState<any>(null);
   const [form] = Form.useForm();
@@ -132,13 +134,15 @@ const DeptList: React.FC = () => {
       dataIndex: 'status',
       width: 80,
       valueType: 'select',
-      valueEnum: {
-        active: { text: f('status.active') },
-        inactive: { text: f('status.inactive') },
-      },
+      valueEnum: Object.fromEntries(
+        statusDict.options.map((option) => [
+          option.value,
+          { text: option.label },
+        ]),
+      ),
       render: (_, r) => (
         <Tag color={r.status === 'active' ? 'green' : 'red'}>
-          {f(`status.${r.status}`)}
+          {statusDict.getLabel(r.status)}
         </Tag>
       ),
     },
@@ -293,12 +297,7 @@ const DeptList: React.FC = () => {
             rules={[{ required: true }]}
             initialValue="active"
           >
-            <Select
-              options={[
-                { value: 'active', label: f('status.active') },
-                { value: 'inactive', label: f('status.inactive') },
-              ]}
-            />
+            <Select options={statusDict.options} />
           </Form.Item>
         </Form>
       </Modal>
