@@ -19,6 +19,7 @@ import {
   TreeSelect,
 } from 'antd';
 import React, { useRef, useState } from 'react';
+import { useSystemDict } from '@/hooks/useSystemDict';
 import { getDeptTree } from '@/services/saas-zero/dept';
 import { getRoleList } from '@/services/saas-zero/role';
 import {
@@ -44,6 +45,7 @@ const UserList: React.FC = () => {
   const actionRef = useRef<ActionType>(null);
   const { message, modal } = App.useApp();
   const { can } = usePermission();
+  const statusDict = useSystemDict('status', ['active', 'inactive']);
   const [modalOpen, setModalOpen] = useState(false);
   const [editRecord, setEditRecord] = useState<SaaS.SysUser | null>(null);
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
@@ -99,12 +101,14 @@ const UserList: React.FC = () => {
       dataIndex: 'status',
       width: 80,
       valueType: 'select',
-      valueEnum: {
-        active: { text: f('status.active'), status: 'Success' },
-        inactive: { text: f('status.inactive'), status: 'Error' },
-      },
+      valueEnum: Object.fromEntries(
+        statusDict.options.map((option) => [
+          option.value,
+          { text: option.label },
+        ]),
+      ),
       render: (_, r) => (
-        <Tag color={statusColor[r.status]}>{f(`status.${r.status}`)}</Tag>
+        <Tag color={statusColor[r.status]}>{statusDict.getLabel(r.status)}</Tag>
       ),
     },
     {
@@ -393,12 +397,7 @@ const UserList: React.FC = () => {
             rules={[{ required: true }]}
             initialValue="active"
           >
-            <Select
-              options={[
-                { value: 'active', label: f('status.active') },
-                { value: 'inactive', label: f('status.inactive') },
-              ]}
-            />
+            <Select options={statusDict.options} />
           </Form.Item>
         </Form>
       </Modal>

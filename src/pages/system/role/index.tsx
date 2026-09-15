@@ -20,6 +20,7 @@ import {
   Tree,
 } from 'antd';
 import React, { useRef, useState } from 'react';
+import { useSystemDict } from '@/hooks/useSystemDict';
 import { getMyApis } from '@/services/saas-zero/api';
 import { getMenuTree } from '@/services/saas-zero/menu';
 import {
@@ -44,6 +45,7 @@ const RoleList: React.FC = () => {
   const actionRef = useRef<ActionType>(null);
   const { message, modal } = App.useApp();
   const { can } = usePermission();
+  const statusDict = useSystemDict('status', ['active', 'inactive']);
   const [modalOpen, setModalOpen] = useState(false);
   const [editRecord, setEditRecord] = useState<SaaS.SysRole | null>(null);
   const [form] = Form.useForm();
@@ -78,12 +80,14 @@ const RoleList: React.FC = () => {
       dataIndex: 'status',
       width: 80,
       valueType: 'select',
-      valueEnum: {
-        active: { text: f('status.active'), status: 'Success' },
-        inactive: { text: f('status.inactive'), status: 'Error' },
-      },
+      valueEnum: Object.fromEntries(
+        statusDict.options.map((option) => [
+          option.value,
+          { text: option.label },
+        ]),
+      ),
       render: (_, r) => (
-        <Tag color={statusColor[r.status]}>{f(`status.${r.status}`)}</Tag>
+        <Tag color={statusColor[r.status]}>{statusDict.getLabel(r.status)}</Tag>
       ),
     },
     {
@@ -346,12 +350,7 @@ const RoleList: React.FC = () => {
             rules={[{ required: true }]}
             initialValue="active"
           >
-            <Select
-              options={[
-                { value: 'active', label: f('status.active') },
-                { value: 'inactive', label: f('status.inactive') },
-              ]}
-            />
+            <Select options={statusDict.options} />
           </Form.Item>
           <Form.Item name="remark" label={f('entity.remark')}>
             <Input.TextArea />

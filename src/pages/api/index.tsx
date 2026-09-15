@@ -8,6 +8,7 @@ import { ProTable } from '@ant-design/pro-components';
 import { useIntl } from '@umijs/max';
 import { App, Button, Form, Input, Modal, Select, Space, Tag } from 'antd';
 import React, { useRef, useState } from 'react';
+import { useSystemDict } from '@/hooks/useSystemDict';
 import {
   createApi,
   deleteApi,
@@ -84,6 +85,8 @@ const ApiList: React.FC = () => {
   const actionRef = useRef<ActionType>(null);
   const { message, modal } = App.useApp();
   const { can } = usePermission();
+  const statusDict = useSystemDict('status', ['active', 'inactive']);
+  const apiTypeDict = useSystemDict('api_type');
   const f = (id: string) => intl.formatMessage({ id });
   const [modalOpen, setModalOpen] = useState(false);
   const [editRecord, setEditRecord] = useState<any>(null);
@@ -108,13 +111,15 @@ const ApiList: React.FC = () => {
       dataIndex: 'apiType',
       width: 80,
       valueType: 'select',
-      valueEnum: {
-        group: { text: f('entity.menu.directory') },
-        api: { text: 'API' },
-      },
+      valueEnum: Object.fromEntries(
+        apiTypeDict.options.map((option) => [
+          option.value,
+          { text: option.label },
+        ]),
+      ),
       render: (_, r) => (
         <Tag color={r.apiType === 'group' ? 'blue' : 'green'}>
-          {r.apiType === 'group' ? f('entity.menu.directory') : 'API'}
+          {apiTypeDict.getLabel(r.apiType)}
         </Tag>
       ),
     },
@@ -139,13 +144,15 @@ const ApiList: React.FC = () => {
       dataIndex: 'status',
       width: 80,
       valueType: 'select',
-      valueEnum: {
-        active: { text: f('status.active') },
-        inactive: { text: f('status.inactive') },
-      },
+      valueEnum: Object.fromEntries(
+        statusDict.options.map((option) => [
+          option.value,
+          { text: option.label },
+        ]),
+      ),
       render: (_, r) => (
         <Tag color={r.status === 'active' ? 'green' : 'red'}>
-          {f(`status.${r.status}`)}
+          {statusDict.getLabel(r.status)}
         </Tag>
       ),
     },
@@ -289,12 +296,7 @@ const ApiList: React.FC = () => {
             rules={[{ required: true }]}
             initialValue="api"
           >
-            <Select
-              options={[
-                { value: 'api', label: 'API' },
-                { value: 'group', label: f('entity.menu.directory') },
-              ]}
-            />
+            <Select options={apiTypeDict.options} />
           </Form.Item>
           <Form.Item name="apiPath" label={f('entity.api.path')}>
             <Input placeholder="/system/user/list" />
@@ -325,12 +327,7 @@ const ApiList: React.FC = () => {
             rules={[{ required: true }]}
             initialValue="active"
           >
-            <Select
-              options={[
-                { value: 'active', label: f('status.active') },
-                { value: 'inactive', label: f('status.inactive') },
-              ]}
-            />
+            <Select options={statusDict.options} />
           </Form.Item>
         </Form>
       </Modal>

@@ -15,6 +15,7 @@ import {
 } from 'antd';
 import dayjs from 'dayjs';
 import React, { useRef, useState } from 'react';
+import { useSystemDict } from '@/hooks/useSystemDict';
 import { getPackageList } from '@/services/saas-zero/package';
 import {
   createTenant,
@@ -38,6 +39,7 @@ const TenantList: React.FC = () => {
   const actionRef = useRef<ActionType>(null);
   const { message, modal } = App.useApp();
   const { can } = usePermission();
+  const statusDict = useSystemDict('status', ['active', 'frozen', 'expired']);
   const [modalOpen, setModalOpen] = useState(false);
   const [editRecord, setEditRecord] = useState<any>(null);
   const [form] = Form.useForm();
@@ -106,13 +108,14 @@ const TenantList: React.FC = () => {
       dataIndex: 'status',
       width: 80,
       valueType: 'select',
-      valueEnum: {
-        active: { text: f('status.normal') },
-        frozen: { text: f('status.frozen') },
-        expired: { text: f('status.expired') },
-      },
+      valueEnum: Object.fromEntries(
+        statusDict.options.map((option) => [
+          option.value,
+          { text: option.label },
+        ]),
+      ),
       render: (_, r) => (
-        <Tag color={statusColor[r.status]}>{f(`status.${r.status}`)}</Tag>
+        <Tag color={statusColor[r.status]}>{statusDict.getLabel(r.status)}</Tag>
       ),
     },
     {
@@ -295,12 +298,7 @@ const TenantList: React.FC = () => {
             rules={[{ required: true }]}
             initialValue="active"
           >
-            <Select
-              options={[
-                { value: 'active', label: f('status.active') },
-                { value: 'frozen', label: f('status.frozen') },
-              ]}
-            />
+            <Select options={statusDict.options} />
           </Form.Item>
         </Form>
       </Modal>
