@@ -124,6 +124,32 @@
     ],
   },
   {
+    path: '/job',
+    name: 'job',
+    icon: 'ScheduleOutlined',
+    access: 'canManageJobs',
+    routes: [
+      {
+        path: '/job',
+        redirect: '/job/list',
+      },
+      {
+        path: '/job/list',
+        name: 'jobList',
+        icon: 'ScheduleOutlined',
+        access: 'canManageJobs',
+        component: './job',
+      },
+      {
+        path: '/job/log',
+        name: 'jobLog',
+        icon: 'FileSearchOutlined',
+        access: 'canViewJobLogs',
+        component: './job/log',
+      },
+    ],
+  },
+  {
     path: '/account/center',
     name: 'accountCenter',
     component: './account/center',

@@ -348,6 +348,90 @@ declare namespace SaaS {
     ids: string[];
   };
 
+  type SysJob = {
+    id?: number;
+    idStr?: string;
+    name: string;
+    group: string;
+    handler: string;
+    params?: string;
+    cronExpression: string;
+    timeZone: string;
+    misfirePolicy: string;
+    concurrent: boolean;
+    timeout: number;
+    maxRetry: number;
+    retryInterval: number;
+    status: string;
+    remark?: string;
+    nextRunAt?: string | number;
+    lastRunAt?: string | number;
+    lastStatus: string;
+    lastDuration?: number;
+    lastError?: string;
+    createdAt?: string | number;
+    updatedAt?: string | number;
+  };
+
+  type JobQuery = {
+    page: number;
+    pageSize: number;
+    name?: string;
+    group?: string;
+    handler?: string;
+    status?: string;
+  };
+
+  type JobCreate = {
+    name: string;
+    group: string;
+    handler: string;
+    params?: string;
+    cronExpression: string;
+    timeZone?: string;
+    misfirePolicy?: string;
+    concurrent?: boolean;
+    timeout?: number;
+    maxRetry?: number;
+    retryInterval?: number;
+    status?: string;
+    remark?: string;
+  };
+
+  type JobUpdate = Partial<JobCreate> & { id: string };
+
+  type SysJobLog = {
+    id?: number;
+    idStr?: string;
+    jobId: string;
+    jobName: string;
+    jobGroup: string;
+    handler: string;
+    triggerType: string;
+    execNode: string;
+    status: string;
+    attempt: number;
+    message?: string;
+    exceptionInfo?: string;
+    duration?: number;
+    createdAt?: string | number;
+  };
+
+  type JobLogQuery = {
+    page: number;
+    pageSize: number;
+    jobId?: string;
+    jobName?: string;
+    status?: string;
+    beginTime?: string;
+    endTime?: string;
+  };
+
+  type CleanJobLogReq = {
+    jobId: string;
+    keepDays?: number;
+  };
+
   type SysRoleMenuIds = {
     menuIds: string[];
   };

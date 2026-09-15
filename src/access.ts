@@ -25,6 +25,8 @@ export default function access(
       canManageApis: true,
       canManageDicts: true,
       canViewLogs: true,
+      canManageJobs: true,
+      canViewJobLogs: true,
     };
   }
 
@@ -67,5 +69,7 @@ export default function access(
     canManageApis: hasMenu('/api'),
     canManageDicts: hasMenu('/dict'),
     canViewLogs: hasMenu('/log'),
+    canManageJobs: hasMenu('/job/list'),
+    canViewJobLogs: hasMenu('/job/log'),
   };
 }
