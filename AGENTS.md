@@ -88,6 +88,7 @@ initialState 注入 ProLayout → 用户头像/菜单/权限生效
 ```
 POST /oauth/login { tenantCode, username, password, captchaId, captchaVal }
   → result.token → 存入 sessionStorage（键 'saas-zero-token'）
+  → result.userId / result.tenantId / result.username 等为扁平字段，不返回嵌套 user
   → getMenus() → buildLayoutMenu() → menuData
   → getCurrentUser() + getPermissions() → userInfo
   → setInitialState({ currentUser: userInfo, menuData })
@@ -134,7 +135,7 @@ export async function getUserList(params: SaaS.UserQuery) {
 
 ### delete 请求
 
-所有删除统一使用 `POST` + body `{ ids: number[] }`（匹配后端 `IdsReq`），不另写 `DELETE` 方法。
+所有删除统一使用 `POST` + body `{ ids: string[] }`（匹配后端 `IdsReq`，值来自 `idStr`），不另写 `DELETE` 方法。
 
 ### 特殊处理
 
@@ -146,7 +147,7 @@ export async function getCaptcha() {
 }
 ```
 
-> 历史遗留：`auth.ts` 的 `getCaptcha` 里仍有一段手动拆包代码（判断 `res.code === 200` 再取 `res.data`）。早期后端返回 `{ code, msg, data }` 且拦截器未拆包时有必要；现在响应拦截器在 `app.tsx` 统一拆包，这段手动拆包是防御性冗余，可以删除。
+> 当前 `auth.ts` 的 `getCaptcha` 仍保留一段兼容性手动拆包逻辑；正常请求会先经过 `app.tsx` 的 response interceptor 自动拆包。若后续清理该兼容逻辑，应同步运行前端类型检查和登录相关测试。
 
 ## ID 字段规范（双字段模式）
 
@@ -285,7 +286,7 @@ const Page: React.FC = () => {
 
 ### 删除/批量删除
 
-所有删除使用 `POST` + `{ ids: number[] }` 请求，操作完成后 `actionRef.current?.reload()`。
+所有删除使用 `POST` + `{ ids: string[] }` 请求，值来自记录的 `idStr`，操作完成后 `actionRef.current?.reload()`。
 
 ### 弹窗编辑
 
