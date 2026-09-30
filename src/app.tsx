@@ -215,13 +215,15 @@ export const request: RequestConfig = {
   ],
   errorConfig: {
     errorHandler: (error: any) => {
+      // umi-request 对非 2xx 抛 ResponseError：解析后的响应体在 error.data（错误信息 msg 在这里），
+      // error.message 只有 'http error' 这种无意义文案，必须优先读 body。
+      const body = error?.data ?? error?.response?.data;
       console.log(
         '[API] ✗',
-        error.code || error.response?.status,
-        error.message,
+        error.code || body?.code || error.response?.status,
+        body?.msg || error.message,
       );
-      const code =
-        error.code || error.response?.data?.code || error.response?.status;
+      const code = error.code || body?.code || error.response?.status;
       if (code === 401 || code === 1004) {
         sessionStorage.removeItem('saas-zero-token');
         setTimeout(() => {
@@ -229,7 +231,7 @@ export const request: RequestConfig = {
         }, 100);
         return;
       }
-      antdMessage.error(error.message || 'Request failed');
+      antdMessage.error(body?.msg || error.message || 'Request failed');
     },
   },
 };

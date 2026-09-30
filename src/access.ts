@@ -52,7 +52,7 @@ export default function access(
   return {
     isAdmin: admin,
     canAdmin: admin || roleCodes.includes('manager') || hasMenu('/system'),
-    // Route-level access: default 租户管理员可见全部，其余按菜单权�?角色可见�?
+    // Route-level access: default 租户管理员可见全部，其余按菜单权限/角色可见性
     routeFilter: (route: any) => {
       if (!route.name) return true;
       if (admin) return true;
